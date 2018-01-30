@@ -9,20 +9,10 @@
 
 #include <boost/asio.hpp>
 
-#include "rap_exchange.hpp"
-#include "rap_reader.hpp"
-#include "rap_request.hpp"
-#include "rap_response.hpp"
-#include "rap_writer.hpp"
-
-// #include "rapper_conn.hpp"
-#include "rapper_server.hpp"
+#include "crap.h"
 
 extern "C" int main(int argc, char** argv) {
-  assert(sizeof(rap::text) == sizeof(const char*) + sizeof(size_t));
-  assert(sizeof(rap::header) == 4);
-
-  auto x = new rap::server();
-
+  auto x = rap_conn_create();
+  rap_conn_destroy(x);
   return 0;
 }

@@ -37,7 +37,7 @@ enum {
   rap_tag_service_resume = rap_tag('\x06'),
   rap_tag_user_first = rap_tag('\x80'),
   rap_tag_invalid = rap_tag(0)
-} rap_tags;
+};
 
 enum {
   rap_conn_exchange_id = 0x1fff,
