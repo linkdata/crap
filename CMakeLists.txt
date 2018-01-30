@@ -42,9 +42,8 @@ add_executable(crapper
   rap_textmap.gperf
   rap_writer.hpp
 
-  crapper/rapper.hpp
-  crapper/rapper_conn.hpp
-  crapper/rapper_server.hpp
+  crap.cpp
+  crap.h
   crapper/crapper.cpp
 )
 target_link_libraries(crapper ${Boost_LIBRARIES})

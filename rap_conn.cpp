@@ -2,11 +2,10 @@
 
 namespace rap {
 
-conn::conn(rap::server& server)
+conn::conn()
     : next_id_(0),
       buf_ptr_(buffer_),
       buf_end_(buf_ptr_),
-      server_(server),
       exchanges_(rap_max_exchange_id + 1, rap::exchange(*this)) {
   // assert correctly initialized exchange vector
   assert(exchanges_.size() == rap_max_exchange_id + 1);

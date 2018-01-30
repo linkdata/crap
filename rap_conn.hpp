@@ -1,15 +1,15 @@
 #ifndef RAP_CONN_HPP
 #define RAP_CONN_HPP
 
+#include <cassert>
+#include <cstdint>
+#include <vector>
+
 #include "rap.hpp"
 #include "rap_exchange.hpp"
 #include "rap_frame.hpp"
 #include "rap_server.hpp"
 #include "rap_text.hpp"
-
-#include <cassert>
-#include <cstdint>
-#include <vector>
 
 namespace rap {
 
@@ -17,7 +17,7 @@ class conn {
  public:
   static const int16_t max_send_window = 8;
 
-  explicit conn(rap::server& server);
+  explicit conn();
   void process_conn(const frame* f) { assert(!"TODO!"); }
 
   // results in a call to conn_t::read_stream()
@@ -57,7 +57,6 @@ class conn {
   std::vector<char> buf_towrite_;
   std::vector<char> buf_writing_;
   std::vector<rap::exchange> exchanges_;
-  rap::server& server_;
 
   // must be implemented in conn_t
   void read_stream(char* buf_ptr, size_t buf_max);

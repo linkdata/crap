@@ -52,14 +52,6 @@ enum {
       rap_frame_header_size, /**< Maximum allowed frame payload size. */
 };
 
-typedef struct rap_frame_header_t {
-  unsigned char _buf[4];
-} rap_frame_header;
-
-typedef struct rap_frame_t {
-  rap_frame_header header;
-} rap_frame;
-
 /*
     Network-side connection-level API
 

@@ -1,3 +1,10 @@
+
+#include <cassert>
+#include <cstdlib>
+
+#include "rap_conn.hpp"
+#include "rap_frame.hpp"
+
 #define RAP_CONN_DEFINED 1
 typedef rap::conn rap_conn;
 
@@ -5,11 +12,6 @@ typedef rap::conn rap_conn;
 typedef rap::frame rap_frame;
 
 #include "crap.h"
-#include <cassert>
-#include <cstdlib>
-
-#include "rap_conn.hpp"
-#include "rap_frame.hpp"
 
 extern "C" rap_conn* rap_conn_create() { return new rap::conn(); }
 

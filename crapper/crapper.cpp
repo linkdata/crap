@@ -18,7 +18,7 @@
 // #include "rapper_conn.hpp"
 #include "rapper_server.hpp"
 
-int main(int, char* []) {
+extern "C" int main(int argc, char** argv) {
   assert(sizeof(rap::text) == sizeof(const char*) + sizeof(size_t));
   assert(sizeof(rap::header) == 4);
 
