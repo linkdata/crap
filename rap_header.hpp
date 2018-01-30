@@ -30,8 +30,8 @@ class header {
     buf_[3] = static_cast<unsigned char>(id);
   }
 
-  const char *data() const { return reinterpret_cast<const char *>(this); }
-  char *data() { return reinterpret_cast<char *>(this); }
+  const char* data() const { return reinterpret_cast<const char*>(this); }
+  char* data() { return reinterpret_cast<char*>(this); }
   size_t size() const { return rap_frame_header_size + payload_size(); }
 
   bool has_payload() const { return (buf_[2] & (mask_head | mask_body)) != 0; }

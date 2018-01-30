@@ -26,7 +26,9 @@ include_directories($ENV{INCLUDE})
 add_executable(crapper
   rap.hpp
   rap_conn.hpp
+  rap_conn.cpp
   rap_exchange.hpp
+  rap_exchange.cpp
   rap_frame.hpp
   rap_header.hpp
   rap_kvv.hpp
@@ -40,9 +42,9 @@ add_executable(crapper
   rap_textmap.gperf
   rap_writer.hpp
 
-  # crapper/rapper.hpp
-  # crapper/rapper_conn.hpp
-  # crapper/rapper_server.hpp
+  crapper/rapper.hpp
+  crapper/rapper_conn.hpp
+  crapper/rapper_server.hpp
   crapper/crapper.cpp
 )
 target_link_libraries(crapper ${Boost_LIBRARIES})

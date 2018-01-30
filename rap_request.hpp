@@ -14,7 +14,7 @@ namespace rap {
 
 class request : public record {
  public:
-  request(reader &r)
+  request(reader& r)
       : record(r.frame()),
         method_(r.read_text()),
         path_(r.read_text()),
@@ -30,12 +30,12 @@ class request : public record {
 
   text method() const { return method_; }
   text path() const { return path_; }
-  const rap::query &query() const { return query_; }
-  const rap::headers &headers() const { return headers_; }
+  const rap::query& query() const { return query_; }
+  const rap::headers& headers() const { return headers_; }
   text host() const { return host_; }
   int64_t content_length() const { return content_length_; }
 
-  void render(string_t &out) const {
+  void render(string_t& out) const {
     if (method().is_null()) return;
     assert(!path().is_null());
     assert(content_length() >= -1);

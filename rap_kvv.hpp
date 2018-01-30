@@ -18,9 +18,9 @@ class kvv {
  public:
   kvv() {}
 
-  kvv(const kvv &other) : data_(other.data_) {}
+  kvv(const kvv& other) : data_(other.data_) {}
 
-  kvv(reader &r) {
+  kvv(reader& r) {
     for (;;) {
       text key(r.read_text());
       if (key.is_null()) break;
@@ -38,12 +38,9 @@ class kvv {
   size_t find(const char* key) const {
     size_t i = 0;
     while (i < data_.size()) {
-      if (data_.at(i).is_null())
-        break;
-      if (data_.at(i) == key)
-        return i + 1;
-      while (!data_.at(i).is_null())
-        ++i;
+      if (data_.at(i).is_null()) break;
+      if (data_.at(i) == key) return i + 1;
+      while (!data_.at(i).is_null()) ++i;
     }
     return 0;
   }
@@ -55,8 +52,8 @@ class kvv {
 class query : public kvv {
  public:
   query() : kvv() {}
-  query(reader &r) : kvv(r) {}
-  void render(string_t &out) const {
+  query(reader& r) : kvv(r) {}
+  void render(string_t& out) const {
     char prefix = '?';
     for (size_t i = 0; i < size(); ++i) {
       text key(at(i));
@@ -80,8 +77,8 @@ class query : public kvv {
 class headers : public kvv {
  public:
   headers() : kvv() {}
-  headers(reader &r) : kvv(r) {}
-  void render(string_t &out) const {
+  headers(reader& r) : kvv(r) {}
+  void render(string_t& out) const {
     for (size_t i = 0; i < size(); ++i) {
       text key(at(i));
       if (key.is_null()) break;
@@ -100,7 +97,7 @@ class headers : public kvv {
   }
 };
 
-const rap::writer &operator<<(const rap::writer &w, const rap::kvv &kvv) {
+const rap::writer& operator<<(const rap::writer& w, const rap::kvv& kvv) {
   for (size_t i = 0; i < kvv.size(); ++i) w << kvv.at(i);
   w << text();
   return w;

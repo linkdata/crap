@@ -25,17 +25,17 @@ class record {
     tag_invalid = tag(0)
   } tags;
 
-  static void write(std::streambuf &sb, char ch) { sb.sputc(ch); }
+  static void write(std::streambuf& sb, char ch) { sb.sputc(ch); }
 
-  static void write(std::streambuf &sb, uint16_t n) {
+  static void write(std::streambuf& sb, uint16_t n) {
     sb.sputc(static_cast<char>(n >> 8));
     sb.sputc(static_cast<char>(n));
   }
 
-  explicit record(const rap::frame *f) : frame_(f) {}
+  explicit record(const rap::frame* f) : frame_(f) {}
 
  protected:
-  const rap::frame *frame_;
+  const rap::frame* frame_;
 };
 
 }  // namespace rap

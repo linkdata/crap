@@ -13,30 +13,30 @@ extern "C" {
 */
 
 #ifndef RAP_CONN_DEFINED
-# define RAP_CONN_DEFINED 1
+#define RAP_CONN_DEFINED 1
 typedef void rap_conn;
 #endif
 
 #ifndef RAP_FRAME_DEFINED
-# define RAP_FRAME_DEFINED 1
+#define RAP_FRAME_DEFINED 1
 typedef void rap_frame;
 #endif
 
 #ifndef RAP_PARSER_DEFINED
-# define RAP_PARSER_DEFINED 1
+#define RAP_PARSER_DEFINED 1
 typedef void rap_parser;
 #endif
 
 typedef char rap_tag;
 enum {
-    rap_tag_set_string = rap_tag('\x01'),
-    rap_tag_set_route = rap_tag('\x02'),
-    rap_tag_http_request = rap_tag('\x03'),
-    rap_tag_http_response = rap_tag('\x04'),
-    rap_tag_service_pause = rap_tag('\x05'),
-    rap_tag_service_resume = rap_tag('\x06'),
-    rap_tag_user_first = rap_tag('\x80'),
-    rap_tag_invalid = rap_tag(0)
+  rap_tag_set_string = rap_tag('\x01'),
+  rap_tag_set_route = rap_tag('\x02'),
+  rap_tag_http_request = rap_tag('\x03'),
+  rap_tag_http_response = rap_tag('\x04'),
+  rap_tag_service_pause = rap_tag('\x05'),
+  rap_tag_service_resume = rap_tag('\x06'),
+  rap_tag_user_first = rap_tag('\x80'),
+  rap_tag_invalid = rap_tag(0)
 } rap_tags;
 
 enum {
@@ -57,7 +57,7 @@ typedef struct rap_frame_header_t {
 } rap_frame_header;
 
 typedef struct rap_frame_t {
-    rap_frame_header header;
+  rap_frame_header header;
 } rap_frame;
 
 /*

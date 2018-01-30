@@ -34,4 +34,6 @@
 # others
 build/
 .vscode/
+.vs/
 *.zip
+*.user

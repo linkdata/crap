@@ -13,7 +13,7 @@ namespace rap {
 
 class reader {
  public:
-  reader(const rap::frame *f)
+  reader(const rap::frame* f)
       : frame_(f),
         src_ptr_(f->payload()),
         src_end_(f->payload() + f->payload_size()),
@@ -72,7 +72,7 @@ class reader {
     if (!error_) {
       if (size_t length = read_length()) {
         if (src_ptr_ + length <= src_end_) {
-          const char *p = src_ptr_;
+          const char* p = src_ptr_;
           src_ptr_ += length;
           return text(p, length);
         }
@@ -84,7 +84,7 @@ class reader {
     return text();
   }
 
-  bool read_string(string_t &out) {
+  bool read_string(string_t& out) {
     text txt = read_text();
     if (txt.is_null()) return false;
     out.append(txt.data(), txt.size());
@@ -104,17 +104,17 @@ class reader {
 
   void consume() { src_ptr_ = src_end_; }
 
-  const rap::frame *frame() const { return frame_; }
+  const rap::frame* frame() const { return frame_; }
   uint16_t id() const { return frame_->header().id(); }
   bool eof() const { return error_ || src_ptr_ >= src_end_; }
   rap::error error() const { return error_; }
-  const char *data() const { return src_ptr_; }
+  const char* data() const { return src_ptr_; }
   size_t size() const { return src_end_ - src_ptr_; }
 
  private:
-  const rap::frame *frame_;
-  const char *src_ptr_;
-  const char *src_end_;
+  const rap::frame* frame_;
+  const char* src_ptr_;
+  const char* src_end_;
   rap::error error_;
 
   void set_error(rap::error e) {

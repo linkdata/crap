@@ -17,15 +17,11 @@
 #include <iostream>
 #include <sstream>
 
-class rap_exchange;
-typedef rapper::config<rap_exchange> rapper_cfg;
-
-class rap_exchange : public rapper_cfg::exchange_base {
+class rap_exchange : public rap::exchange {
  public:
-  explicit rap_exchange(rapper_cfg::conn_type &conn)
-      : rapper_cfg::exchange_base(conn) {}
+  explicit rap_exchange(rap::conn& conn) : rap::exchange(conn) {}
 
-  rap::error process_head(rap::reader &r) {
+  rap::error process_head(rap::reader& r) {
     if (r.read_tag() != rap::record::tag_http_request)
       return rap::rap_err_unknown_frame_type;
     rap::request req(r);
@@ -41,7 +37,7 @@ class rap_exchange : public rapper_cfg::exchange_base {
     return r.error();
   }
 
-  rap::error process_body(rap::reader &r) {
+  rap::error process_body(rap::reader& r) {
     assert(r.size() > 0);
     header().set_body();
     sputn(r.data(), r.size());
@@ -49,7 +45,7 @@ class rap_exchange : public rapper_cfg::exchange_base {
     return r.error();
   }
 
-  rap::error process_final(rap::reader &r) {
+  rap::error process_final(rap::reader& r) {
     assert(r.size() == 0);
     header().set_final();
     pubsync();
@@ -60,13 +56,13 @@ class rap_exchange : public rapper_cfg::exchange_base {
   rap::string_t req_echo_;
 };
 
-class rap_server : public rapper_cfg::server_type {
+class rap_server : public rapper::rap_server {
  public:
   typedef boost::shared_ptr<rap_server> ptr;
   virtual ~rap_server() {}
 
-  rap_server(boost::asio::io_service &io_service, short port)
-      : rapper_cfg::server_type(io_service, port) {}
+  rap_server(boost::asio::io_service& io_service, short port)
+      : rapper::rap_server(io_service, port) {}
 
   virtual void once_per_second() {
     if (stat_rps_ || stat_mbps_in_ || stat_mbps_out_) {
@@ -79,15 +75,15 @@ class rap_server : public rapper_cfg::server_type {
   }
 };
 
-int main(int, char *[]) {
-  assert(sizeof(rap::text) == sizeof(const char *) + sizeof(size_t));
+int main(int, char* []) {
+  assert(sizeof(rap::text) == sizeof(const char*) + sizeof(size_t));
   assert(sizeof(rap::header) == 4);
   try {
     boost::asio::io_service io_service;
     rap_server::ptr s(new rap_server(io_service, 10111));
     s->start();
     io_service.run();
-  } catch (std::exception &e) {
+  } catch (std::exception& e) {
     std::cerr << "Exception: " << e.what() << "\n";
   }
 

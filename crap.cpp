@@ -11,22 +11,16 @@ typedef rap::frame rap_frame;
 #include "rap_conn.hpp"
 #include "rap_frame.hpp"
 
-extern "C" rap_conn* rap_conn_create()
-{
-    return new rap::conn();
+extern "C" rap_conn* rap_conn_create() { return new rap::conn(); }
+
+extern "C" void rap_conn_destroy(rap_conn* conn) {
+  if (conn) delete conn;
 }
 
-extern "C" void rap_conn_destroy(rap_conn* conn)
-{
-    if (conn)
-        delete conn;
-}
-
-extern "C" int rap_conn_recv(rap_conn* conn, const char* buf, int bytes_transferred)
-{
-    if (!conn || !buf || bytes_transferred < 0)
-        return -1;
-    return 0;
+extern "C" int rap_conn_recv(rap_conn* conn, const char* buf,
+                             int bytes_transferred) {
+  if (!conn || !buf || bytes_transferred < 0) return -1;
+  return 0;
 }
 
 int rap_conn_send(rap_conn* conn, char* buf, int max_len);

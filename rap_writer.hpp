@@ -14,7 +14,7 @@ class writer {
  public:
   typedef std::streambuf::traits_type traits_type;
 
-  writer(std::streambuf &sb) : sb_(sb) {}
+  writer(std::streambuf& sb) : sb_(sb) {}
 
   error write_length(size_t n) const {
     if (n < 0x80) {
@@ -29,7 +29,7 @@ class writer {
     return rap_err_string_too_long;
   }
 
-  error write_text(const char *src_ptr, size_t src_len) const {
+  error write_text(const char* src_ptr, size_t src_len) const {
     if (!src_len) {
       sb_.sputc(0);
       sb_.sputc(src_ptr ? 1 : 0);
@@ -42,7 +42,7 @@ class writer {
       return rap_err_ok;
     }
     if (error e = write_length(static_cast<int16_t>(src_len))) return e;
-    const char *src_end = src_ptr + src_len;
+    const char* src_end = src_ptr + src_len;
     while (src_ptr < src_end)
       if (sb_.sputc(*src_ptr++) == traits_type::eof()) {
         assert(0);
@@ -60,42 +60,41 @@ class writer {
   }
 
   // single char
-  const rap::writer &operator<<(char ch) const {
+  const rap::writer& operator<<(char ch) const {
     sb_.sputc(ch);
     return *this;
   }
 
   // 16-bit MSB written using length
-  const rap::writer &operator<<(uint16_t n) const {
+  const rap::writer& operator<<(uint16_t n) const {
     write_length(n);
     return *this;
   }
 
-  const rap::writer &operator<<(uint64_t n) const {
+  const rap::writer& operator<<(uint64_t n) const {
     write_uint64(n);
     return *this;
   }
 
-  const rap::writer &operator<<(int64_t n) const {
+  const rap::writer& operator<<(int64_t n) const {
     uint64_t ux = static_cast<uint64_t>(n) << 1;
-    if (n < 0)
-      ux = ~ux;
+    if (n < 0) ux = ~ux;
     write_uint64(ux);
     return *this;
   }
 
-  const rap::writer &operator<<(const text &t) const {
+  const rap::writer& operator<<(const text& t) const {
     write_text(t.data(), t.size());
     return *this;
   }
 
-  const rap::writer &operator<<(const std::string &s) const {
+  const rap::writer& operator<<(const std::string& s) const {
     write_text(s.data(), s.size());
     return *this;
   }
 
  private:
-  std::streambuf &sb_;
+  std::streambuf& sb_;
 };
 
 }  // namespace rap

@@ -3,18 +3,10 @@
 
 #include "rap.hpp"
 
-#include <boost/shared_ptr.hpp>
-
 namespace rapper {
 
-class server;
-class conn;
-
-template <typename exchange_t>
-struct config {
-  typedef boost::shared_ptr<rapper::server> server_ptr;
-  typedef boost::shared_ptr<rapper::conn> conn_ptr;
-};
+class rap_server;
+class rap_conn;
 
 }  // namespace rapper
 
