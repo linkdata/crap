@@ -25,14 +25,17 @@ return;
 // consume up to 'len' bytes of data from 'p',
 // return the number of bytes consumed, or a
 // negative value on error.
+/*
 int conn::read_stream(const char* p, int len) {
   if (!p || len < 0) return -1;
   return 0;
 }
+*/
 
 // new stream data available in the read buffer
 void conn::read_stream_ok(size_t bytes_transferred) {
-  // server().stat_read_bytes_add(bytes_transferred);
+  stats_.read_bytes += bytes_transferred;
+  stats_.read_iops++;
   buf_end_ += bytes_transferred;
   assert(buf_end_ <= buffer_ + sizeof(buffer_));
 
@@ -78,15 +81,14 @@ error conn::write(const char* src_ptr, size_t src_len) {
 void conn::write_some() {
   if (!buf_writing_.empty() || buf_towrite_.empty()) return;
   buf_writing_.swap(buf_towrite_);
-  /*
-  self().write_stream(buf_writing_.data(), buf_writing_.size());
-  */
+  write_stream(buf_writing_.data(), buf_writing_.size());
   return;
 }
 
 void conn::write_stream_ok(size_t bytes_transferred) {
   assert(bytes_transferred == buf_writing_.size());
-  // server().stat_write_bytes_add(bytes_transferred);
+  stats_.write_bytes += bytes_transferred;
+  stats_.write_iops++;
   buf_writing_.clear();
   return;
 }
@@ -95,22 +97,6 @@ void conn::write_stream_ok(size_t bytes_transferred) {
 uint16_t conn::next_id() {
   if (next_id_ > rap_max_exchange_id) return rap_conn_exchange_id;
   return next_id_++;
-}
-
-// must be implemented in conn_t
-void conn::read_stream(char* buf_ptr, size_t buf_max) {
-  // read input stream into buffer provided,
-  // call read_stream_ok() when done (or abort the conn)
-  assert(0);
-  return;
-}
-
-// must be implemented in conn_t
-void conn::write_stream(const char* src_ptr, size_t src_len) {
-  // write provided buffer to the output stream
-  // call write_stream_ok() when done (or abort the conn)
-  assert(0);
-  return;
 }
 
 }  // namespace rap

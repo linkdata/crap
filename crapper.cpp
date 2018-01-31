@@ -12,6 +12,7 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include "rap_stats.hpp"
 #include "rap_exchange.hpp"
 #include "rap_reader.hpp"
 #include "rap_request.hpp"
@@ -62,16 +63,18 @@ class crapper_conn : rap::conn,
  public:
   typedef boost::shared_ptr<crapper_conn> ptr;
 
-  crapper_conn(boost::asio::io_service& ios) : rap::conn(), socket_(ios) {}
+  crapper_conn(boost::asio::io_service& io_service, rap::stats& stats)
+      : rap::conn(), socket_(io_service), stats_(stats), timer_(io_service) {}
 
   boost::asio::ip::tcp::socket& socket() { return socket_; }
 
   void start() {
+    timer_.expires_from_now(boost::posix_time::seconds(1));
     this->read_some();
     return;
   }
 
-  void read_stream(char* buf_ptr, size_t buf_max) {
+  virtual void read_stream(char* buf_ptr, size_t buf_max) {
     // fprintf(stderr, "rapper::conn::read_stream(%p, %lu)\n", buf_ptr,
     // buf_max);
     socket_.async_read_some(
@@ -82,7 +85,7 @@ class crapper_conn : rap::conn,
     return;
   }
 
-  void write_stream(const char* src_ptr, size_t src_len) {
+  virtual void write_stream(const char* src_ptr, size_t src_len) {
     // fprintf(stderr, "rapper::conn::write_stream(%p, %lu)\n", src_ptr,
     // src_len);
     boost::asio::async_write(
@@ -95,6 +98,8 @@ class crapper_conn : rap::conn,
 
  private:
   boost::asio::ip::tcp::socket socket_;
+  boost::asio::deadline_timer timer_;
+  rap::stats& stats_;
 
   void handle_read(const boost::system::error_code& error,
                    size_t bytes_transferred) {
@@ -121,6 +126,16 @@ class crapper_conn : rap::conn,
     this->write_some();
     return;
   }
+
+  void handle_timeout(const boost::system::error_code& e) {
+    if (e != boost::asio::error::operation_aborted) {
+      stats().aggregate_into(stats_);
+    }
+    timer_.expires_from_now(boost::posix_time::seconds(1));
+    timer_.async_wait(boost::bind(&crapper_conn::handle_timeout,
+                                  this->shared_from_this(),
+                                  boost::asio::placeholders::error));
+  }
 };
 
 class crapper_server : public boost::enable_shared_from_this<crapper_server> {
@@ -137,12 +152,7 @@ class crapper_server : public boost::enable_shared_from_this<crapper_server> {
         last_write_bytes_(0),
         stat_rps_(0),
         stat_mbps_in_(0),
-        stat_mbps_out_(0),
-        stat_head_count_(0),
-        stat_read_iops_(0),
-        stat_read_bytes_(0),
-        stat_write_iops_(0),
-        stat_write_bytes_(0) {}
+        stat_mbps_out_(0) {}
 
   virtual ~crapper_server() {}
 
@@ -157,21 +167,6 @@ class crapper_server : public boost::enable_shared_from_this<crapper_server> {
   const boost::asio::io_service& io_service() const { return io_service_; }
   boost::asio::io_service& io_service() { return io_service_; }
 
-  uint64_t stat_head_count() const { return stat_head_count_; }
-  void stat_head_count_inc() { ++stat_head_count_; }
-  uint64_t stat_read_iops() const { return stat_read_iops_; }
-  uint64_t stat_read_bytes() const { return stat_read_bytes_; }
-  void stat_read_bytes_add(uint64_t n) {
-    ++stat_read_iops_;
-    stat_read_bytes_ += n;
-  }
-  uint64_t stat_write_iops() const { return stat_write_iops_; }
-  uint64_t stat_write_bytes() const { return stat_write_bytes_; }
-  void stat_write_bytes_add(uint64_t n) {
-    ++stat_write_iops_;
-    stat_write_bytes_ += n;
-  }
-
   void once_per_second() {
     if (stat_rps_ || stat_mbps_in_ || stat_mbps_out_) {
       fprintf(
@@ -183,11 +178,6 @@ class crapper_server : public boost::enable_shared_from_this<crapper_server> {
   }
 
  protected:
-  uint64_t stat_head_count_;
-  uint64_t stat_read_iops_;
-  uint64_t stat_read_bytes_;
-  uint64_t stat_write_iops_;
-  uint64_t stat_write_bytes_;
   uint64_t last_head_count_;
   uint64_t last_read_iops_;
   uint64_t last_read_bytes_;
@@ -203,9 +193,10 @@ class crapper_server : public boost::enable_shared_from_this<crapper_server> {
   boost::asio::io_service& io_service_;
   boost::asio::ip::tcp::acceptor acceptor_;
   boost::asio::deadline_timer timer_;
+  rap::stats stats_;
 
   void start_accept() {
-    crapper_conn::ptr conn(new crapper_conn(io_service()));
+    crapper_conn::ptr conn(new crapper_conn(io_service(), stats_));
     acceptor_.async_accept(
         conn->socket(),
         boost::bind(&crapper_server::handle_accept, this->shared_from_this(),
@@ -227,23 +218,23 @@ class crapper_server : public boost::enable_shared_from_this<crapper_server> {
     if (e != boost::asio::error::operation_aborted) {
       uint64_t n;
 
-      n = this->stat_head_count();
+      n = stats_.head_count;
       stat_rps_ = n - last_head_count_;
       last_head_count_ = n;
 
-      n = this->stat_read_iops();
+      n = stats_.read_iops;
       stat_iops_in_ = n - last_read_iops_;
       last_read_iops_ = n;
 
-      n = this->stat_read_bytes();
+      n = stats_.read_bytes;
       stat_mbps_in_ = ((n - last_read_bytes_) * 8) / 1024 / 1024;
       last_read_bytes_ = n;
 
-      n = this->stat_write_iops();
+      n = stats_.write_iops;
       stat_iops_out_ = n - last_write_iops_;
       last_write_iops_ = n;
 
-      n = this->stat_write_bytes();
+      n = stats_.write_bytes;
       stat_mbps_out_ = ((n - last_write_bytes_) * 8) / 1024 / 1024;
       last_write_bytes_ = n;
 
