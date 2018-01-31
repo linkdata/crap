@@ -24,8 +24,8 @@ class stats {
     other.head_count += head_count.exchange(0);
     other.read_iops += read_iops.exchange(0);
     other.read_bytes += read_bytes.exchange(0);
-    other.write_iops += read_iops.exchange(0);
-    other.write_bytes += read_bytes.exchange(0);
+    other.write_iops += write_iops.exchange(0);
+    other.write_bytes += write_bytes.exchange(0);
   }
 };
 
