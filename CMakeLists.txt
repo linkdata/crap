@@ -44,6 +44,6 @@ add_executable(crapper
 
   crap.cpp
   crap.h
-  crapper/crapper.cpp
+  crapper/rapper.cpp
 )
 target_link_libraries(crapper ${Boost_LIBRARIES})

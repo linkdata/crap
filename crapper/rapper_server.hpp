@@ -1,7 +1,6 @@
 #ifndef RAPPER_SERVER_HPP
 #define RAPPER_SERVER_HPP
 
-#include "rap_server.hpp"
 #include "rapper.hpp"
 #include "rapper_conn.hpp"
 
@@ -12,13 +11,11 @@
 
 namespace rapper {
 
-class rap_server : public rap::server,
-                   public boost::enable_shared_from_this<rap_server> {
+class rap_server : public boost::enable_shared_from_this<rap_server> {
  public:
   typedef boost::shared_ptr<rap_server> ptr;
 
   virtual ~rap_server() {}
-  rap::server* as_rap_server() { return this; }
   rap_server(boost::asio::io_service& io_service, short port);
   void start();
   virtual void once_per_second() {}
