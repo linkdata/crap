@@ -34,8 +34,7 @@ int conn::read_stream(const char* p, int len) {
 
 // new stream data available in the read buffer
 void conn::read_stream_ok(size_t bytes_transferred) {
-  stats_.read_bytes += bytes_transferred;
-  stats_.read_iops++;
+  stats_.add_bytes_read(bytes_transferred);
   buf_end_ += bytes_transferred;
   assert(buf_end_ <= buffer_ + sizeof(buffer_));
 
@@ -87,8 +86,7 @@ void conn::write_some() {
 
 void conn::write_stream_ok(size_t bytes_transferred) {
   assert(bytes_transferred == buf_writing_.size());
-  stats_.write_bytes += bytes_transferred;
-  stats_.write_iops++;
+  stats_.add_bytes_written(bytes_transferred);
   buf_writing_.clear();
   return;
 }

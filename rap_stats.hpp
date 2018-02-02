@@ -20,6 +20,16 @@ class stats {
   std::atomic<uint64_t> write_iops;
   std::atomic<uint64_t> write_bytes;
 
+  void add_bytes_read(uint64_t n) {
+    read_iops++;
+    read_bytes += n;
+  }
+
+  void add_bytes_written(uint64_t n) {
+    write_iops++;
+    write_bytes += n;
+  }
+
   void aggregate_into(stats& other) {
     other.head_count += head_count.exchange(0);
     other.read_iops += read_iops.exchange(0);

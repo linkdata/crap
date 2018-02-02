@@ -10,7 +10,6 @@
 #include "rap.hpp"
 #include "rap_exchange.hpp"
 #include "rap_frame.hpp"
-#include "rap_server.hpp"
 #include "rap_text.hpp"
 #include "rap_stats.hpp"
 

@@ -43,7 +43,7 @@ error exchange::process_frame(const frame* f) {
   if (!f->header().is_final()) send_ack();
   reader r(f);
   if (f->header().has_head()) {
-    // conn_.server().stat_head_count_inc();
+    conn_.stats().head_count++;
     if (error e = process_head(r)) return e;
   }
   if (f->header().has_body()) {

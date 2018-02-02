@@ -64,7 +64,6 @@ class text;
 class kvv;
 class exchange;
 class conn;
-class server;
 
 }  // namespace rap
 
