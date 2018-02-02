@@ -36,6 +36,7 @@ add_executable(crapper
   rap_record.hpp
   rap_request.hpp
   rap_response.hpp
+  rap_stats.hpp
   rap_text.hpp
   rap_textmap.c
   rap_textmap.gperf
