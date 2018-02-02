@@ -53,12 +53,6 @@ class conn {
   rap::stats& stats() { return stats_; }
   const rap::stats& stats() const { return stats_; }
 
-  uint64_t stat_head_count() { return stats_.head_count.exchange(0); }
-  uint64_t stat_read_iops() { return stats_.read_iops.exchange(0); }
-  uint64_t stat_read_bytes() { return stats_.read_bytes.exchange(0); }
-  uint64_t stat_write_iops() { return stats_.read_iops.exchange(0); }
-  uint64_t stat_write_bytes() { return stats_.read_bytes.exchange(0); }
-
  private:
   uint16_t next_id_;
   char buffer_[rap_frame_max_size * 2];
