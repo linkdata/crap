@@ -31,13 +31,18 @@ class session : public std::enable_shared_from_this<session> {
   }
 
   void start() {
-    if (!conn_) conn_ = rap_conn_create(write_cb, this);
+    if (!conn_) conn_ = rap_conn_create(this, write_cb, frame_cb);
     do_read();
   }
 
  private:
+
   static int write_cb(void* self, const char* src_ptr, int src_len) {
     return static_cast<session*>(self)->write(src_ptr, src_len);
+  }
+
+  static int frame_cb(void* self, const char* src_ptr, int src_len) {
+    return static_cast<session*>(self)->frame(src_ptr, src_len);
   }
 
   // may be called from a foreign thread via the callback
@@ -45,6 +50,12 @@ class session : public std::enable_shared_from_this<session> {
     // TODO: thread safety?
     buf_towrite_.insert(buf_towrite_.end(), src_ptr, src_ptr + src_len);
     write_some();
+    return 0;
+  }
+
+  // may be called from a foreign thread via the callback
+  int frame(const char* src_ptr, int src_len) {
+    // TODO: thread safety?
     return 0;
   }
 
@@ -136,15 +147,15 @@ class server {
 };
 
 int main(int argc, char* argv[]) {
+  const char* port = "10111";
   try {
-    if (argc != 2) {
-      std::cerr << "Usage: async_tcp_echo_server <port>\n";
-      return 1;
+    if (argc == 2) {
+      port = argv[1];
     }
 
     boost::asio::io_service io_service;
 
-    server s(io_service, std::atoi(argv[1]));
+    server s(io_service, std::atoi(port));
 
     io_service.run();
   } catch (std::exception& e) {

@@ -35,10 +35,9 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories($ENV{INCLUDE})
 add_executable(crapper
   rap.hpp
+  rap_connbase.hpp
   rap_conn.hpp
-  rap_conn.cpp
   rap_exchange.hpp
-  rap_exchange.cpp
   rap_frame.hpp
   rap_header.hpp
   rap_kvv.hpp

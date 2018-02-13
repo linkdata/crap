@@ -61,14 +61,14 @@ enum {
 */
 typedef int (*rap_conn_write_cb_t)(void*, const char*, int);
 
-
 /*
-    void rap_conn_write_notify(void* user_data)
-
-    Write notification callback. Called by a connection when
-    there is data pending to be sent to the network.
+    The new frame callback.
+    Called during 'rap_conn_recv()' as new frames are decoded
+    from the network stream.
+    The buffer contents must be copied or processed before the call returns.
+    A nonzero return value indicates the connection should terminate.
 */
-typedef void (*rap_conn_write_notify_cb_t)(void*);
+typedef int (*rap_conn_frame_cb_t)(void* userdata, const char*, int);
 
 /*
     Network-side connection-level API
@@ -83,7 +83,7 @@ typedef void (*rap_conn_write_notify_cb_t)(void*);
     and rap_conn_destroy() must be called to clean up.
 */
 
-rap_conn* rap_conn_create(rap_conn_write_cb_t write_cb, void* userdata);
+rap_conn* rap_conn_create(void* userdata, rap_conn_write_cb_t write_cb, rap_conn_frame_cb_t frame_cb);
 void rap_conn_destroy(rap_conn* conn);
 int rap_conn_recv(rap_conn* conn, const char* buf, int len);
 // int rap_conn_send(rap_conn* conn, char* buf, int max_len);
