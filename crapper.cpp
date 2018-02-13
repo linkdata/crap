@@ -1,3 +1,160 @@
+//
+// async_tcp_echo_server.cpp
+// ~~~~~~~~~~~~~~~~~~~~~~~~~
+//
+// Copyright (c) 2003-2017 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
+#include <boost/asio.hpp>
+#include <cstdlib>
+#include <iostream>
+#include <memory>
+#include <thread>
+#include <utility>
+
+#include "crap.h"
+
+using boost::asio::ip::tcp;
+
+class session : public std::enable_shared_from_this<session> {
+ public:
+  session(tcp::socket socket) : socket_(std::move(socket)), conn_(0) {}
+
+  ~session() {
+    if (conn_) {
+      rap_conn_destroy(conn_);
+      conn_ = 0;
+    }
+  }
+
+  void start() {
+    if (!conn_) conn_ = rap_conn_create(write_cb, this);
+    do_read();
+  }
+
+ private:
+  static int write_cb(void* self, const char* src_ptr, int src_len) {
+    return static_cast<session*>(self)->write(src_ptr, src_len);
+  }
+
+  // may be called from a foreign thread via the callback
+  int write(const char* src_ptr, int src_len) {
+    // TODO: thread safety?
+    buf_towrite_.insert(buf_towrite_.end(), src_ptr, src_ptr + src_len);
+    write_some();
+    return 0;
+  }
+
+  // writes any buffered data to the stream using conn_t::write_stream()
+  // may be called from a foreign thread via the callback
+  void write_some() {
+    // TODO: thread safety?
+    if (!buf_writing_.empty() || buf_towrite_.empty()) return;
+    buf_writing_.swap(buf_towrite_);
+    write_stream(buf_writing_.data(), buf_writing_.size());
+    return;
+  }
+
+  void write_stream(const char* src_ptr, size_t src_len) {
+    auto self(shared_from_this());
+    boost::asio::async_write(
+        socket_, boost::asio::buffer(src_ptr, src_len),
+        [this, self](boost::system::error_code ec, std::size_t length) {
+          if (!ec) {
+            write_stream_ok(length);
+            write_some();
+          }
+        });
+    return;
+  }
+
+  void write_stream_ok(size_t bytes_transferred) {
+    assert(bytes_transferred == buf_writing_.size());
+    buf_writing_.clear();
+    return;
+  }
+
+  void do_read() {
+    auto self(shared_from_this());
+    socket_.async_read_some(
+        boost::asio::buffer(data_, max_length),
+        [this, self](boost::system::error_code ec, std::size_t length) {
+          if (!ec) {
+            int rap_ec = rap_conn_recv(conn_, data_, (int)length);
+            if (!rap_ec) {
+              do_read();
+            }
+          }
+        });
+  }
+
+#if 0
+  void do_write(std::size_t length) {
+    auto self(shared_from_this());
+    boost::asio::async_write(
+        socket_, boost::asio::buffer(data_, length),
+        [this, self](boost::system::error_code ec, std::size_t /*length*/) {
+          if (!ec) {
+            do_read();
+          }
+        });
+  }
+#endif
+
+  enum { max_length = 1024 };
+  tcp::socket socket_;
+  char data_[max_length];
+  std::vector<char> buf_towrite_;
+  std::vector<char> buf_writing_;
+  rap_conn* conn_;
+};
+
+class server {
+ public:
+  server(boost::asio::io_service& io_service, short port)
+      : acceptor_(io_service, tcp::endpoint(tcp::v4(), port)),
+        socket_(io_service) {
+    do_accept();
+  }
+
+ private:
+  void do_accept() {
+    acceptor_.async_accept(socket_, [this](boost::system::error_code ec) {
+      if (!ec) {
+        std::make_shared<session>(std::move(socket_))->start();
+      }
+
+      do_accept();
+    });
+  }
+
+  tcp::acceptor acceptor_;
+  tcp::socket socket_;
+};
+
+int main(int argc, char* argv[]) {
+  try {
+    if (argc != 2) {
+      std::cerr << "Usage: async_tcp_echo_server <port>\n";
+      return 1;
+    }
+
+    boost::asio::io_service io_service;
+
+    server s(io_service, std::atoi(argv[1]));
+
+    io_service.run();
+  } catch (std::exception& e) {
+    std::cerr << "Exception: " << e.what() << "\n";
+  }
+
+  return 0;
+}
+
+#if 0
 /**
  * @brief REST Aggregation Protocol test server
  * @author Johan Lindh <johan@linkdata.se>
@@ -12,12 +169,13 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
 
-#include "rap_stats.hpp"
 #include "rap_exchange.hpp"
 #include "rap_reader.hpp"
 #include "rap_request.hpp"
 #include "rap_response.hpp"
+#include "rap_stats.hpp"
 #include "rap_writer.hpp"
+
 
 class rap_exchange : public rap::exchange {
  public:
@@ -64,42 +222,63 @@ class crapper_conn : rap::conn,
   typedef boost::shared_ptr<crapper_conn> ptr;
 
   crapper_conn(boost::asio::io_service& io_service, rap::stats& stats)
-      : rap::conn(), socket_(io_service), stats_(stats), timer_(io_service) {}
+      : rap::conn(&write_cb, this),
+        socket_(io_service),
+        stats_(stats),
+        timer_(io_service),
+        buf_ptr_(buffer_),
+        buf_end_(buf_ptr_) {}
 
   boost::asio::ip::tcp::socket& socket() { return socket_; }
 
+  static int write_cb(void* self, const char* p, int n) {
+    return static_cast<crapper_conn*>(self)->write_stream(p, n);
+  }
+
   void start() {
     timer_.expires_from_now(boost::posix_time::seconds(1));
-    this->read_some();
+    read_some();
     return;
   }
 
-  virtual void read_stream(char* buf_ptr, size_t buf_max) {
-    // fprintf(stderr, "rapper::conn::read_stream(%p, %lu)\n", buf_ptr,
-    // buf_max);
+  void read_some() {
     socket_.async_read_some(
-        boost::asio::buffer(buf_ptr, buf_max),
-        boost::bind(&crapper_conn::handle_read, this->shared_from_this(),
+        boost::asio::buffer(buf_end_, sizeof(buffer_) - (buf_end_ - buffer_)),
+        boost::bind(&crapper_conn::handle_read, shared_from_this(),
                     boost::asio::placeholders::error,
                     boost::asio::placeholders::bytes_transferred));
     return;
   }
 
-  virtual void write_stream(const char* src_ptr, size_t src_len) {
-    // fprintf(stderr, "rapper::conn::write_stream(%p, %lu)\n", src_ptr,
-    // src_len);
-    boost::asio::async_write(
-        socket_, boost::asio::buffer(src_ptr, src_len),
-        boost::bind(&crapper_conn::handle_write, this->shared_from_this(),
-                    boost::asio::placeholders::error,
-                    boost::asio::placeholders::bytes_transferred));
+  // writes any buffered data to the stream using conn_t::write_stream()
+  void write_some() {
+    if (!buf_writing_.empty() || buf_towrite_.empty()) return;
+    buf_writing_.swap(buf_towrite_);
+    write_stream(buf_writing_.data(), buf_writing_.size());
     return;
+  }
+
+  int write_stream(const char* src_ptr, size_t src_len) {
+    if (!write_error_) {
+      boost::asio::async_write(
+          socket_, boost::asio::buffer(src_ptr, src_len),
+          boost::bind(&crapper_conn::handle_write, this->shared_from_this(),
+                      boost::asio::placeholders::error,
+                      boost::asio::placeholders::bytes_transferred));
+    }
+    return write_error_.value;
   }
 
  private:
   boost::asio::ip::tcp::socket socket_;
   boost::asio::deadline_timer timer_;
   rap::stats& stats_;
+  boost::system::error_code write_error_;
+  char buffer_[rap::rap_frame_max_size * 2];
+  char* buf_ptr_;  //< current position within buffer
+  char* buf_end_;  //< expected end of frame or NULL if no header yet
+  std::vector<char> buf_towrite_;
+  std::vector<char> buf_writing_;
 
   void handle_read(const boost::system::error_code& error,
                    size_t bytes_transferred) {
@@ -109,14 +288,28 @@ class crapper_conn : rap::conn,
               static_cast<unsigned long>(bytes_transferred));
       return;
     }
-    this->read_stream_ok(bytes_transferred);
-    this->read_some();
+
+    stats_.add_bytes_read(bytes_transferred);
+    buf_end_ += bytes_transferred;
+    assert(buf_end_ <= buffer_ + sizeof(buffer_));
+    int consumed_bytes =
+        read_stream(buffer_, static_cast<int>(buf_end_ - buffer_));
+    const char* src_ptr = buffer_ + consumed_bytes;
+    // move trailing unprocessed input to the start
+    if (src_ptr > buffer_) {
+      char* dst_ptr = buffer_;
+      while (src_ptr < buf_end_) *(dst_ptr++) = *src_ptr++;
+      buf_end_ = dst_ptr;
+    }
+
+    read_some();
     return;
   }
 
   void handle_write(const boost::system::error_code& error,
                     size_t bytes_transferred) {
     if (error) {
+      write_error_ = error;
       fprintf(stderr, "rapper::conn::handle_write(%s, %lu)\n",
               error.message().c_str(),
               static_cast<unsigned long>(bytes_transferred));
@@ -261,3 +454,4 @@ int main(int, char* []) {
 
   return 0;
 }
+#endif

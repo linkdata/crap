@@ -126,7 +126,7 @@ error exchange::write_queue() {
 }
 
 error exchange::send_frame(const frame* f) {
-  if (error e = conn_.write(f->data(), f->size())) {
+  if (error e = conn_.write(f->data(), static_cast<int>(f->size()))) {
     assert(!"rap::exchange::send_frame(): conn_.write() failed");
     return e;
   }

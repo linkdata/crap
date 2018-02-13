@@ -10,23 +10,20 @@
 #include "rap.hpp"
 #include "rap_exchange.hpp"
 #include "rap_frame.hpp"
-#include "rap_text.hpp"
 #include "rap_stats.hpp"
+#include "rap_text.hpp"
 
 namespace rap {
 
 class conn {
  public:
+  typedef int (*write_cb_t)(void*, const char*, int);
+
   static const int16_t max_send_window = 8;
 
-  explicit conn();
-  void process_conn(const frame* f) { assert(!"TODO!"); }
+  explicit conn(write_cb_t cb, void* cb_param);
 
-  // results in a call to conn_t::read_stream()
-  void read_some() {
-    read_stream(buf_end_, sizeof(buffer_) - (buf_end_ - buffer_));
-    return;
-  }
+  void process_conn(const frame* f) { assert(!"TODO!"); }
 
   // consume up to 'len' bytes of data from 'p',
   // return the number of bytes consumed, or a
@@ -34,10 +31,10 @@ class conn {
   int read_stream(const char* p, int len);
 
   // new stream data available in the read buffer
-  void read_stream_ok(size_t bytes_transferred);
+  // void read_stream_ok(size_t bytes_transferred);
 
   // buffered write to the network stream
-  error write(const char* src_ptr, size_t src_len);
+  rap::error write(const char* src_ptr, int src_len);
 
   // writes any buffered data to the stream using conn_t::write_stream()
   void write_some();
@@ -62,19 +59,8 @@ class conn {
   std::vector<char> buf_writing_;
   std::vector<rap::exchange> exchanges_;
   rap::stats stats_;
-
-  virtual void read_stream(char* buf_ptr, size_t buf_max) {
-    // read input stream into buffer provided,
-    // call read_stream_ok() when done (or abort the conn)
-    assert(0);
-    return;
-  }
-  virtual void write_stream(const char* src_ptr, size_t src_len) {
-    // read input stream into buffer provided,
-    // call read_stream_ok() when done (or abort the conn)
-    assert(0);
-    return;
-  }
+  void* write_cb_param_;
+  write_cb_t write_cb_;
 };
 
 }  // namespace rap

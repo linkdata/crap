@@ -1,7 +1,17 @@
+#
+# crapper - compact RAP echo server
+#
+# Requires C++11 and Boost 1.66 or higher.
+#
+# See the LICENCE file for licensing details.
+# Copyright (c)2015-2018 Johan Lindh <johan at linkdata dot se>.
+#
+
 cmake_minimum_required(VERSION 3.8.2)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(CMAKE_CONFIGURATION_TYPES Debug Release)
+set(CMAKE_CXX_STANDARD 11)
 
 project(crap)
 enable_testing()
