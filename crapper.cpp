@@ -175,11 +175,12 @@ class server {
         socket_(io_service),
         timer_(io_service),
         last_head_count_(0),
+        last_read_iops_(0),
         last_read_bytes_(0),
+        last_write_iops_(0),
         last_write_bytes_(0),
-        stat_rps_(0),
-        stat_mbps_in_(0),
-        stat_mbps_out_(0) {
+        last_stat_mbps_in_(0),
+        last_stat_mbps_out_(0) {
     do_timer();
     do_accept();
   }
@@ -190,11 +191,8 @@ class server {
   uint64_t last_read_bytes_;
   uint64_t last_write_iops_;
   uint64_t last_write_bytes_;
-  uint64_t stat_rps_;
-  uint64_t stat_iops_in_;
-  uint64_t stat_mbps_in_;
-  uint64_t stat_iops_out_;
-  uint64_t stat_mbps_out_;
+  uint64_t last_stat_mbps_in_;
+  uint64_t last_stat_mbps_out_;
 
  private:
   void do_timer() {
@@ -213,19 +211,14 @@ class server {
     });
   }
 
-  void once_per_second() {
-    if (stat_rps_ || stat_mbps_in_ || stat_mbps_out_) {
-      fprintf(
-          stderr,
-          "%llu Rps - IN: %llu Mbps, %llu iops - OUT: %llu Mbps, %llu iops\n",
-          stat_rps_, stat_mbps_in_, stat_iops_in_, stat_mbps_out_,
-          stat_iops_out_);
-    }
-  }
-
   void handle_timeout(const boost::system::error_code& e) {
     if (e != boost::asio::error::operation_aborted) {
       uint64_t n;
+      uint64_t stat_rps_;
+      uint64_t stat_iops_in_;
+      uint64_t stat_mbps_in_;
+      uint64_t stat_iops_out_;
+      uint64_t stat_mbps_out_;
 
       n = stats_.head_count;
       stat_rps_ = n - last_head_count_;
@@ -247,7 +240,15 @@ class server {
       stat_mbps_out_ = ((n - last_write_bytes_) * 8) / 1024 / 1024;
       last_write_bytes_ = n;
 
-      once_per_second();
+      if (stat_mbps_in_ != last_stat_mbps_in_ || stat_mbps_out_ != last_stat_mbps_out_) {
+        last_stat_mbps_in_ = stat_mbps_in_;
+        last_stat_mbps_out_ = stat_mbps_out_;
+        fprintf(
+            stderr,
+            "%llu Rps - IN: %llu Mbps, %llu iops - OUT: %llu Mbps, %llu iops\n",
+            stat_rps_, stat_mbps_in_, stat_iops_in_, stat_mbps_out_,
+            stat_iops_out_);
+      }
     }
     do_timer();
   }
