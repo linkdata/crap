@@ -27,7 +27,8 @@ using boost::asio::ip::tcp;
 
 class session : public std::enable_shared_from_this<session> {
  public:
-  session(tcp::socket socket) : socket_(std::move(socket)), conn_(0) {}
+  session(tcp::socket socket, rap::stats& stats)
+      : socket_(std::move(socket)), conn_(0), stats_(stats) {}
 
   ~session() {
     if (conn_) {
@@ -68,7 +69,10 @@ class session : public std::enable_shared_from_this<session> {
     const rap_header& hdr = f->header();
     rap::exchange& exch = static_cast<rap::conn*>(conn_)->exchange(hdr.id());
     rap::reader r(f);
-    if (hdr.has_head()) exch.process_head(r);
+    if (hdr.has_head()) {
+      exch.process_head(r);
+      stats_.head_count++;
+    }
     if (hdr.has_body()) exch.process_body(r);
     if (hdr.is_final()) exch.process_final(r);
     return 0;
@@ -108,6 +112,7 @@ class session : public std::enable_shared_from_this<session> {
             return;
           } else {
             assert(length == buf_writing_.size());
+            stats_.add_bytes_written(length);
           }
           buf_writing_.clear();
           write_some();
@@ -121,11 +126,15 @@ class session : public std::enable_shared_from_this<session> {
         boost::asio::buffer(data_, max_length),
         [this, self](boost::system::error_code ec, std::size_t length) {
           if (ec) {
-            fprintf(stderr, "rapper::conn::read_stream(%s, %lu)\n",
-                    ec.message().c_str(), static_cast<unsigned long>(length));
-            fflush(stderr);
+            if (ec != boost::asio::error::eof) {
+              fprintf(stderr, "rapper::conn::read_stream(%s, %lu) [%d]\n",
+                      ec.message().c_str(), static_cast<unsigned long>(length),
+                      ec.value());
+              fflush(stderr);
+            }
             return;
           }
+          stats_.add_bytes_read(length);
 #if 0
           const char* src_end = data_ + length;
           const char* p = data_;
@@ -156,29 +165,97 @@ class session : public std::enable_shared_from_this<session> {
   std::vector<char> buf_towrite_;
   std::vector<char> buf_writing_;
   rap_conn* conn_;
+  rap::stats& stats_;
 };
 
 class server {
  public:
   server(boost::asio::io_service& io_service, short port)
       : acceptor_(io_service, tcp::endpoint(tcp::v4(), port)),
-        socket_(io_service) {
+        socket_(io_service),
+        timer_(io_service),
+        last_head_count_(0),
+        last_read_bytes_(0),
+        last_write_bytes_(0),
+        stat_rps_(0),
+        stat_mbps_in_(0),
+        stat_mbps_out_(0) {
+    do_timer();
     do_accept();
   }
 
+ protected:
+  uint64_t last_head_count_;
+  uint64_t last_read_iops_;
+  uint64_t last_read_bytes_;
+  uint64_t last_write_iops_;
+  uint64_t last_write_bytes_;
+  uint64_t stat_rps_;
+  uint64_t stat_iops_in_;
+  uint64_t stat_mbps_in_;
+  uint64_t stat_iops_out_;
+  uint64_t stat_mbps_out_;
+
  private:
+  void do_timer() {
+    timer_.expires_from_now(boost::posix_time::seconds(1));
+    timer_.async_wait(
+        [this](const boost::system::error_code ec) { handle_timeout(ec); });
+  }
+
   void do_accept() {
     acceptor_.async_accept(socket_, [this](boost::system::error_code ec) {
       if (!ec) {
-        std::make_shared<session>(std::move(socket_))->start();
+        std::make_shared<session>(std::move(socket_), stats_)->start();
       }
 
       do_accept();
     });
   }
 
+  void once_per_second() {
+    if (stat_rps_ || stat_mbps_in_ || stat_mbps_out_) {
+      fprintf(
+          stderr,
+          "%llu Rps - IN: %llu Mbps, %llu iops - OUT: %llu Mbps, %llu iops\n",
+          stat_rps_, stat_mbps_in_, stat_iops_in_, stat_mbps_out_,
+          stat_iops_out_);
+    }
+  }
+
+  void handle_timeout(const boost::system::error_code& e) {
+    if (e != boost::asio::error::operation_aborted) {
+      uint64_t n;
+
+      n = stats_.head_count;
+      stat_rps_ = n - last_head_count_;
+      last_head_count_ = n;
+
+      n = stats_.read_iops;
+      stat_iops_in_ = n - last_read_iops_;
+      last_read_iops_ = n;
+
+      n = stats_.read_bytes;
+      stat_mbps_in_ = ((n - last_read_bytes_) * 8) / 1024 / 1024;
+      last_read_bytes_ = n;
+
+      n = stats_.write_iops;
+      stat_iops_out_ = n - last_write_iops_;
+      last_write_iops_ = n;
+
+      n = stats_.write_bytes;
+      stat_mbps_out_ = ((n - last_write_bytes_) * 8) / 1024 / 1024;
+      last_write_bytes_ = n;
+
+      once_per_second();
+    }
+    do_timer();
+  }
+
+  boost::asio::deadline_timer timer_;
   tcp::acceptor acceptor_;
   tcp::socket socket_;
+  rap::stats stats_;
 };
 
 int main(int argc, char* argv[]) {
