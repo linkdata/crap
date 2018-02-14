@@ -9,6 +9,9 @@
 #include "rap_connbase.hpp"
 #include "rap_frame.h"
 #include "rap_reader.hpp"
+#include "rap_request.hpp"
+#include "rap_response.hpp"
+#include "rap_writer.hpp"
 
 namespace rap {
 
@@ -60,20 +63,41 @@ class exchange : public std::streambuf {
       return false;
     }
     if (!f->header().is_final()) {
-      if (ec = send_ack())
-        return false;
+      if (ec = send_ack()) return false;
     }
     return true;
   }
 
-  // implement this in your own exchange_t
-  error process_head(reader& r) { return r.error(); }
+  rap::error process_head(rap::reader& r) {
+    if (r.read_tag() != rap::record::tag_http_request)
+      return rap::rap_err_unknown_frame_type;
+    rap::request req(r);
+    req_echo_.clear();
+    req.render(req_echo_);
+    req_echo_ += '\n';
+    header().set_head();
+    int64_t content_length = req.content_length();
+    if (content_length >= 0) content_length += req_echo_.size();
+    rap::writer(*this) << rap::response(200, content_length);
+    header().set_body();
+    sputn(req_echo_.data(), req_echo_.size());
+    return r.error();
+  }
 
-  // implement this in your own exchange_t
-  error process_body(reader& r) { return r.error(); }
+  rap::error process_body(rap::reader& r) {
+    assert(r.size() > 0);
+    header().set_body();
+    sputn(r.data(), r.size());
+    r.consume();
+    return r.error();
+  }
 
-  // implement this in your own exchange_t
-  error process_final(reader& r) { return r.error(); }
+  rap::error process_final(rap::reader& r) {
+    assert(r.size() == 0);
+    header().set_final();
+    pubsync();
+    return r.error();
+  }
 
   /*
     exchange_t &self() { return *static_cast<exchange_t *>(this); }
@@ -136,6 +160,7 @@ class exchange : public std::streambuf {
   uint16_t id_;
   int16_t send_window_;
   std::vector<char> buf_;
+  rap::string_t req_echo_; 
 
   void exchange::start_write() {
     if (buf_.size() < 256) buf_.resize(256);

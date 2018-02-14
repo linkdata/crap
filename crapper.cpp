@@ -15,6 +15,12 @@
 #include <thread>
 #include <utility>
 
+#include "rap_conn.hpp"
+#include "rap_exchange.hpp"
+#include "rap_reader.hpp"
+#include "rap_request.hpp"
+#include "rap_response.hpp"
+
 #include "crap.h"
 
 using boost::asio::ip::tcp;
@@ -31,22 +37,21 @@ class session : public std::enable_shared_from_this<session> {
   }
 
   void start() {
-    if (!conn_) conn_ = rap_conn_create(write_cb, this, frame_cb, this);
+    if (!conn_) conn_ = rap_conn_create(s_write_cb, this, s_frame_cb, this);
     do_read();
   }
 
  private:
-
-  static int write_cb(void* self, const char* src_ptr, int src_len) {
-    return static_cast<session*>(self)->write(src_ptr, src_len);
+  static int s_write_cb(void* self, const char* src_ptr, int src_len) {
+    return static_cast<session*>(self)->write_cb(src_ptr, src_len);
   }
 
-  static int frame_cb(void* self, const rap_frame* f, int len) {
-    return static_cast<session*>(self)->frame(f, len);
+  static int s_frame_cb(void* self, const rap_frame* f, int len) {
+    return static_cast<session*>(self)->frame_cb(f, len);
   }
 
   // may be called from a foreign thread via the callback
-  int write(const char* src_ptr, int src_len) {
+  int write_cb(const char* src_ptr, int src_len) {
     // TODO: thread safety?
     buf_towrite_.insert(buf_towrite_.end(), src_ptr, src_ptr + src_len);
     write_some();
@@ -54,9 +59,18 @@ class session : public std::enable_shared_from_this<session> {
   }
 
   // may be called from a foreign thread via the callback
-  int frame(const rap_frame* f, int len) {
+  int frame_cb(const rap_frame* f, int len) {
     // TODO: thread safety?
-    fprintf(stderr, "frame: %04x: %d bytes\n", rap_frame_id(f), len);
+    assert(f != NULL);
+    assert(len >= rap_frame_header_size);
+    assert(len == rap_frame_header_size + f->header().payload_size());
+
+    const rap_header& hdr = f->header();
+    rap::exchange& exch = static_cast<rap::conn*>(conn_)->exchange(hdr.id());
+    rap::reader r(f);
+    if (hdr.has_head()) exch.process_head(r);
+    if (hdr.has_body()) exch.process_body(r);
+    if (hdr.is_final()) exch.process_final(r);
     return 0;
   }
 

@@ -2,7 +2,7 @@
 #define RAP_KVV_HPP
 
 #include "rap.hpp"
-#include "rap_frame.hpp"
+#include "rap_frame.h"
 #include "rap_reader.hpp"
 #include "rap_text.hpp"
 #include "rap_writer.hpp"
