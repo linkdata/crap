@@ -1,8 +1,6 @@
 #ifndef RAP_HEADER_HPP
 #define RAP_HEADER_HPP
 
-#include "rap.hpp"
-
 #include <cassert>
 #include <cstdint>
 

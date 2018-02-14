@@ -16,18 +16,11 @@ namespace rap {
 
 class conn : connbase {
  public:
-  typedef int (*write_cb_t)(void*, const char*, int);
-  typedef int (*frame_cb_t)(void*, const char*, int);
-
-  explicit conn::conn(void* cb_param, write_cb_t write_cb, frame_cb_t frame_cb)
-      : next_id_(0),
+  explicit conn::conn(write_cb_t write_cb, void* write_cb_param,
+                      frame_cb_t frame_cb, void* frame_cb_param)
+      : connbase(write_cb, write_cb_param, frame_cb, frame_cb_param),
         frame_ptr_(frame_buf_),
-        cb_param_(cb_param),
-        write_cb_(write_cb),
-        frame_cb_(frame_cb),
         exchanges_(rap_max_exchange_id + 1, rap::exchange(*this)) {
-    assert(write_cb != 0);
-    assert(frame_cb != 0);
     // assert correctly initialized exchange vector
     assert(exchanges_.size() == rap_max_exchange_id + 1);
     for (uint16_t id = 0; id < exchanges_.size(); ++id) {
@@ -40,8 +33,7 @@ class conn : connbase {
   void process_conn(const frame* f) { assert(!"TODO!"); }
 
   // consume up to 'len' bytes of data from 'p',
-  // return the number of bytes consumed, or a
-  // negative value on error.
+  // return negative value on error.
   int read_stream(const char* src_buf, int src_len) {
     int retv = 0;
     if (!src_buf || src_len < 0) return -1;
@@ -74,10 +66,14 @@ class conn : connbase {
       if (id == rap_conn_exchange_id) {
         process_conn(f);
       } else if (id < exchanges_.size()) {
-        exchanges_[id].process_frame(f);
+        error ec = rap_err_ok;
+        if (exchanges_[id].process_frame(f, ec)) {
+          if (f->header().has_head()) stats().head_count++;
+          frame_cb(f, static_cast<int>(frame_ptr_ - frame_buf_));
+        }
         /*
-        int ec = frame_cb_(cb_param_, frame_buf_, static_cast<int>(frame_ptr_ -
-        frame_buf_)); if (ec < 0) { frame_ptr_ = frame_buf_; return ec;
+        int ec = frame_cb_(cb_param_, frame_buf_, ); if (ec < 0) { frame_ptr_ =
+        frame_buf_; return ec;
         }
         */
         retv++;
@@ -101,40 +97,18 @@ class conn : connbase {
   // new stream data available in the read buffer
   // void read_stream_ok(size_t bytes_transferred);
 
-  // buffered write to the network stream
-  rap::error write(const char* src_ptr, int src_len) {
-    if (!src_ptr || src_len < 0 || !write_cb_) return rap_err_invalid_parameter;
-    return write_cb_(cb_param_, src_ptr, src_len) < 0 ? rap_err_payload_too_big
-                                                      : rap_err_ok;
-    /*
-      buf_towrite_.insert(buf_towrite_.end(), src_ptr, src_ptr + src_len);
-      write_some();
-      **/
-  }
-
   // writes any buffered data to the stream using conn_t::write_stream()
   void write_some();
 
   void write_stream_ok(size_t bytes_transferred);
 
-  // used while constructing when initializing vector of exchanges
-  uint16_t next_id() {
-    if (next_id_ > rap_max_exchange_id) return rap_conn_exchange_id;
-    return next_id_++;
-  }
-
   const rap::exchange& exchange(uint16_t id) const { return exchanges_[id]; }
   rap::exchange& exchange(uint16_t id) { return exchanges_[id]; }
 
  private:
-  uint16_t next_id_;
   char frame_buf_[rap_frame_max_size];
   char* frame_ptr_;
   std::vector<rap::exchange> exchanges_;
-  rap::stats stats_;
-  void* cb_param_;
-  write_cb_t write_cb_;
-  frame_cb_t frame_cb_;
 };
 
 }  // namespace rap

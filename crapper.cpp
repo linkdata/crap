@@ -31,7 +31,7 @@ class session : public std::enable_shared_from_this<session> {
   }
 
   void start() {
-    if (!conn_) conn_ = rap_conn_create(this, write_cb, frame_cb);
+    if (!conn_) conn_ = rap_conn_create(write_cb, this, frame_cb, this);
     do_read();
   }
 
@@ -41,8 +41,8 @@ class session : public std::enable_shared_from_this<session> {
     return static_cast<session*>(self)->write(src_ptr, src_len);
   }
 
-  static int frame_cb(void* self, const char* src_ptr, int src_len) {
-    return static_cast<session*>(self)->frame(src_ptr, src_len);
+  static int frame_cb(void* self, const rap_frame* f, int len) {
+    return static_cast<session*>(self)->frame(f, len);
   }
 
   // may be called from a foreign thread via the callback
@@ -54,8 +54,9 @@ class session : public std::enable_shared_from_this<session> {
   }
 
   // may be called from a foreign thread via the callback
-  int frame(const char* src_ptr, int src_len) {
+  int frame(const rap_frame* f, int len) {
     // TODO: thread safety?
+    fprintf(stderr, "frame: %04x: %d bytes\n", rap_frame_id(f), len);
     return 0;
   }
 

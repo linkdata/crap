@@ -1,12 +1,10 @@
 #ifndef RAP_FRAME_HPP
 #define RAP_FRAME_HPP
 
-// #include "rap.hpp"
-#include "rap_header.hpp"
-#include "rap_text.hpp"
-
 #include <cassert>
 #include <cstdint>
+
+#include "rap_header.hpp"
 
 namespace rap {
 

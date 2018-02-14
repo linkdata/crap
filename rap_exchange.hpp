@@ -14,27 +14,26 @@ namespace rap {
 
 class exchange : public std::streambuf {
  public:
+  explicit exchange(const exchange& other)
+      : conn_(other.conn_),
+        queue_(NULL),
+        id_(other.id_ == rap_conn_exchange_id ? conn_.next_id() : other.id_),
+        send_window_(other.send_window_) {
+    start_write();
+  }
 
-    explicit exchange(const exchange& other)
-        : conn_(other.conn_),
-          queue_(NULL),
-          id_(other.id_ == rap_conn_exchange_id ? conn_.next_id() : other.id_),
-          send_window_(other.send_window_) {
-      start_write();
-    }
+  explicit exchange(rap::connbase& conn)
+      : conn_(conn),
+        queue_(NULL),
+        id_(rap_conn_exchange_id),
+        send_window_(conn.send_window()) {
+    start_write();
+  }
 
-    explicit exchange(rap::connbase& conn)
-        : conn_(conn),
-          queue_(NULL),
-          id_(rap_conn_exchange_id),
-          send_window_(conn.send_window()) {
-      start_write();
-    }
-
-    virtual ~exchange() {
-      while (queue_) framelink::dequeue(&queue_);
-      id_ = rap_conn_exchange_id;
-    }
+  virtual ~exchange() {
+    while (queue_) framelink::dequeue(&queue_);
+    id_ = rap_conn_exchange_id;
+  }
 
   const rap::header& header() const {
     return *reinterpret_cast<const rap::header*>(buf_.data());
@@ -45,36 +44,27 @@ class exchange : public std::streambuf {
   error write_frame(const frame* f) {
     if (error e = write_queue()) return e;
     if (send_window_ < 1) {
-  #ifndef NDEBUG
+#ifndef NDEBUG
       fprintf(stderr, "exchange %04x waiting for ack\n", id_);
-  #endif
+#endif
       framelink::enqueue(&queue_, f);
       return rap_err_ok;
     }
     return send_frame(f);
   }
 
-  error process_frame(const frame* f) {
+  bool process_frame(const frame* f, error& ec) {
     if (!f->header().has_payload()) {
       ++send_window_;
-      write_queue();
-      return rap_err_ok;
+      ec = write_queue();
+      return false;
     }
-    if (!f->header().is_final()) send_ack();
-    reader r(f);
-    if (f->header().has_head()) {
-      conn_.stats().head_count++;
-      if (error e = process_head(r)) return e;
+    if (!f->header().is_final()) {
+      if (ec = send_ack())
+        return false;
     }
-    if (f->header().has_body()) {
-      if (error e = process_body(r)) return e;
-    }
-    if (f->header().is_final()) {
-      if (error e = process_final(r)) return e;
-    }
-    return rap_err_ok;
+    return true;
   }
-
 
   // implement this in your own exchange_t
   error process_head(reader& r) { return r.error(); }
@@ -96,7 +86,6 @@ class exchange : public std::streambuf {
   int16_t send_window() const { return send_window_; }
 
  protected:
-
   exchange::int_type exchange::overflow(int_type ch) {
     if (buf_.size() < rap_frame_max_size) {
       size_t new_size = buf_.size() * 2;
@@ -184,7 +173,6 @@ class exchange : public std::streambuf {
     buf[3] = static_cast<char>(id_);
     return conn_.write(buf, 4);
   }
-
 };
 
 }  // namespace rap

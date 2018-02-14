@@ -17,6 +17,11 @@ extern "C" {
 typedef void rap_conn;
 #endif
 
+#ifndef RAP_EXCHANGE_DEFINED
+#define RAP_EXCHANGE_DEFINED 1
+typedef void rap_exchange;
+#endif
+
 #ifndef RAP_FRAME_DEFINED
 #define RAP_FRAME_DEFINED 1
 typedef void rap_frame;
@@ -62,13 +67,12 @@ enum {
 typedef int (*rap_conn_write_cb_t)(void*, const char*, int);
 
 /*
-    The new frame callback.
-    Called during 'rap_conn_recv()' as new frames are decoded
-    from the network stream.
-    The buffer contents must be copied or processed before the call returns.
+    rap_conn_frame_cb(void* userdata, const rap_frame* f, int len)
+
+    The frame callback is invoked when a new frame is received.
     A nonzero return value indicates the connection should terminate.
 */
-typedef int (*rap_conn_frame_cb_t)(void* userdata, const char*, int);
+typedef int (*rap_conn_frame_cb_t)(void* userdata, const rap_frame*, int);
 
 /*
     Network-side connection-level API
@@ -83,13 +87,11 @@ typedef int (*rap_conn_frame_cb_t)(void* userdata, const char*, int);
     and rap_conn_destroy() must be called to clean up.
 */
 
-rap_conn* rap_conn_create(void* userdata, rap_conn_write_cb_t write_cb, rap_conn_frame_cb_t frame_cb);
+rap_conn* rap_conn_create(rap_conn_write_cb_t write_cb, void* write_cb_param,
+                          rap_conn_frame_cb_t frame_cb, void* frame_cb_param);
 void rap_conn_destroy(rap_conn* conn);
 int rap_conn_recv(rap_conn* conn, const char* buf, int len);
 // int rap_conn_send(rap_conn* conn, char* buf, int max_len);
-int rap_conn_lock(rap_conn* conn);
-int rap_conn_unlock(rap_conn* conn);
-
 
 /*
     Application-side connection-level API
@@ -103,6 +105,7 @@ int rap_conn_unlock(rap_conn* conn);
     tag (record type).
 */
 
+rap_exchange* rap_conn_accept(rap_conn* conn);
 rap_frame* rap_conn_frame_dequeue(rap_conn*);
 int rap_conn_frame_enqueue(rap_conn*, rap_frame*);
 
@@ -111,6 +114,7 @@ int rap_conn_frame_enqueue(rap_conn*, rap_frame*);
 */
 rap_frame* rap_frame_create(int payload_max_size);
 void rap_frame_destroy(rap_frame*);
+int rap_frame_id(const rap_frame*);
 size_t rap_frame_needed_bytes(const char*);
 int rap_frame_payload_max_size(const rap_frame*);
 const char* rap_frame_payload_start(const rap_frame*);
