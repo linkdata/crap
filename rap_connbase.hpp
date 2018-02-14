@@ -1,13 +1,12 @@
 #ifndef RAP_CONNBASE_HPP
 #define RAP_CONNBASE_HPP
 
-#include "rap_header.h"
 #include "rap.hpp"
+#include "rap_header.h"
+#include "rap_frame.h"
 #include "rap_stats.hpp"
 
-enum {
-  rap_max_exchange_id = rap_conn_exchange_id - 1
-};
+enum { rap_max_exchange_id = rap_conn_exchange_id - 1 };
 
 namespace rap {
 
@@ -38,8 +37,9 @@ class connbase {
 
   rap::error write(const char* src_ptr, int src_len) {
     if (!src_ptr || src_len < 0 || !write_cb_) return rap_err_invalid_parameter;
-    return write_cb_(write_cb_param_, src_ptr, src_len) < 0 ? rap_err_payload_too_big
-                                                      : rap_err_ok;
+    return write_cb_(write_cb_param_, src_ptr, src_len) < 0
+               ? rap_err_payload_too_big
+               : rap_err_ok;
     /*
       buf_towrite_.insert(buf_towrite_.end(), src_ptr, src_ptr + src_len);
       write_some();

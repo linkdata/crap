@@ -6,10 +6,10 @@
 #include <cstdint>
 #include <vector>
 
-#include "rap_frame.h"
 #include "rap.hpp"
 #include "rap_connbase.hpp"
 #include "rap_exchange.hpp"
+#include "rap_frame.h"
 #include "rap_text.hpp"
 
 namespace rap {
@@ -33,10 +33,9 @@ class conn : connbase {
   void process_conn(const rap_frame* f) { assert(!"TODO!"); }
 
   // consume up to 'len' bytes of data from 'p',
-  // return negative value on error.
+  // returns the number of bytes consumed, or less if there is an error.
   int read_stream(const char* src_buf, int src_len) {
-    int retv = 0;
-    if (!src_buf || src_len < 0) return -1;
+    if (!src_buf || src_len < 0) return 0;
 
     const char* src_ptr = src_buf;
     const char* src_end = src_ptr + src_len;
@@ -46,7 +45,7 @@ class conn : connbase {
       while (frame_ptr_ < frame_buf_ + rap_frame_header_size) {
         assert(src_ptr < src_end);
         *frame_ptr_++ = *src_ptr++;
-        if (src_ptr >= src_end) return retv;
+        if (src_ptr >= src_end) return (int)(src_ptr - src_buf);
       }
 
       // copy data until frame is complete
@@ -54,11 +53,11 @@ class conn : connbase {
       assert(frame_len <= sizeof(frame_buf_));
       const char* frame_end = frame_buf_ + frame_len;
       assert(frame_end <= frame_buf_ + sizeof(frame_buf_));
-      while (frame_ptr_ < frame_end) {
-        assert(src_ptr < src_end);
+      while (src_ptr < src_end && frame_ptr_ < frame_end) {
         *frame_ptr_++ = *src_ptr++;
-        if (src_ptr >= src_end) return retv;
       }
+
+      if (frame_ptr_ < frame_end) return (int)(src_ptr - src_buf);
 
       // frame completed
       const rap_frame* f = reinterpret_cast<const rap_frame*>(frame_buf_);
@@ -76,7 +75,6 @@ class conn : connbase {
         frame_buf_; return ec;
         }
         */
-        retv++;
       } else {
       // exchange id out of range
 #ifndef NDEBUG
@@ -85,13 +83,13 @@ class conn : connbase {
                 id);
 #endif
         frame_ptr_ = frame_buf_;
-        return -1;
+        return (int)(src_ptr - src_buf);
       }
       frame_ptr_ = frame_buf_;
     }
 
     assert(src_ptr == src_end);
-    return retv;
+    return (int)(src_ptr - src_buf);
   }
 
   // new stream data available in the read buffer
@@ -99,8 +97,6 @@ class conn : connbase {
 
   // writes any buffered data to the stream using conn_t::write_stream()
   void write_some();
-
-  void write_stream_ok(size_t bytes_transferred);
 
   const rap::exchange& exchange(uint16_t id) const { return exchanges_[id]; }
   rap::exchange& exchange(uint16_t id) { return exchanges_[id]; }

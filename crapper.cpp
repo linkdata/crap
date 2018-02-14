@@ -86,24 +86,32 @@ class session : public std::enable_shared_from_this<session> {
 
   void write_stream(const char* src_ptr, size_t src_len) {
     auto self(shared_from_this());
+
+#if 0
+    const char* src_end = src_ptr + src_len;
+    const char* p = src_ptr;
+    fprintf(stderr, "W: ");
+    while (p < src_end) {
+      fprintf(stderr, "%02x ", (*p++) & 0xFF);
+    }
+    fprintf(stderr, "\n");
+    fflush(stderr);
+#endif
+
     boost::asio::async_write(
         socket_, boost::asio::buffer(src_ptr, src_len),
         [this, self](boost::system::error_code ec, std::size_t length) {
           if (ec) {
             fprintf(stderr, "rapper::conn::write_stream(%s, %lu)\n",
                     ec.message().c_str(), static_cast<unsigned long>(length));
-            buf_writing_.clear();
+            fflush(stderr);
+            return;
           } else {
-            write_stream_ok(length);
+            assert(length == buf_writing_.size());
           }
+          buf_writing_.clear();
           write_some();
         });
-    return;
-  }
-
-  void write_stream_ok(size_t bytes_transferred) {
-    assert(bytes_transferred == buf_writing_.size());
-    buf_writing_.clear();
     return;
   }
 
@@ -115,32 +123,32 @@ class session : public std::enable_shared_from_this<session> {
           if (ec) {
             fprintf(stderr, "rapper::conn::read_stream(%s, %lu)\n",
                     ec.message().c_str(), static_cast<unsigned long>(length));
+            fflush(stderr);
+            return;
           }
-          if (!ec) {
-            int rap_ec = rap_conn_recv(conn_, data_, (int)length);
-            if (rap_ec < 0) {
-              fprintf(stderr, "rapper::conn::read_stream(): rap error %d\n",
-                      rap_ec);
-            } else {
-              assert(rap_ec == (int)length);
-            }
+#if 0
+          const char* src_end = data_ + length;
+          const char* p = data_;
+          fprintf(stderr, "R: ");
+          while (p < src_end) {
+            fprintf(stderr, "%02x ", (*p++) & 0xFF);
           }
+          fprintf(stderr, "\n");
+          fflush(stderr);
+#endif
+
+          int rap_ec = rap_conn_recv(conn_, data_, (int)length);
+          if (rap_ec < 0) {
+            fprintf(stderr, "rapper::conn::read_stream(): rap error %d\n",
+                    rap_ec);
+            fflush(stderr);
+          } else {
+            assert(rap_ec == (int)length);
+          }
+
           read_stream();
         });
   }
-
-#if 0
-  void do_write(std::size_t length) {
-    auto self(shared_from_this());
-    boost::asio::async_write(
-        socket_, boost::asio::buffer(data_, length),
-        [this, self](boost::system::error_code ec, std::size_t /*length*/) {
-          if (!ec) {
-            do_read();
-          }
-        });
-  }
-#endif
 
   enum { max_length = 1024 };
   tcp::socket socket_;

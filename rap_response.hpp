@@ -59,7 +59,7 @@ class response : public record {
 
   const rap::writer& operator>>(const rap::writer& w) const {
     w << static_cast<char>(rap::record::tag_http_response) << code()
-      << headers() << status() << content_length();
+      << headers() << content_length();
     return w;
   }
 
@@ -69,11 +69,11 @@ class response : public record {
   int64_t content_length_;
 };
 
-inline const rap::writer& operator<<(const rap::writer& w, const rap::response& res) {
+inline const rap::writer& operator<<(const rap::writer& w,
+                                     const rap::response& res) {
   return res >> w;
 }
 
 }  // namespace rap
-
 
 #endif  // RAP_RESPONSE_HPP
