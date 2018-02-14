@@ -7,10 +7,10 @@
 
 #include "rap.hpp"
 #include "rap_connbase.hpp"
+#include "rap_response.hpp"
 #include "rap_frame.h"
 #include "rap_reader.hpp"
 #include "rap_request.hpp"
-#include "rap_response.hpp"
 #include "rap_writer.hpp"
 
 namespace rap {

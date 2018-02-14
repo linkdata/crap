@@ -1,12 +1,12 @@
 #ifndef RAP_WRITER_HPP
 #define RAP_WRITER_HPP
 
-#include "rap.hpp"
-#include "rap_text.hpp"
-
 #include <cassert>
 #include <cstdint>
 #include <streambuf>
+
+#include "rap.hpp"
+#include "rap_text.hpp"
 
 namespace rap {
 

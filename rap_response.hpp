@@ -57,18 +57,23 @@ class response : public record {
   int64_t content_length() const { return content_length_; }
   void set_content_length(int64_t n) { content_length_ = n; }
 
+  const rap::writer& operator>>(const rap::writer& w) const {
+    w << static_cast<char>(rap::record::tag_http_response) << code()
+      << headers() << status() << content_length();
+    return w;
+  }
+
  private:
   uint16_t code_;
   rap::headers headers_;
   int64_t content_length_;
 };
 
+inline const rap::writer& operator<<(const rap::writer& w, const rap::response& res) {
+  return res >> w;
+}
+
 }  // namespace rap
 
-const rap::writer& operator<<(const rap::writer& w, const rap::response& res) {
-  w << static_cast<char>(rap::record::tag_http_response) << res.code()
-    << res.headers() << res.status() << res.content_length();
-  return w;
-}
 
 #endif  // RAP_RESPONSE_HPP

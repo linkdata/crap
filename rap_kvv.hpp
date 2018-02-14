@@ -45,6 +45,12 @@ class kvv {
     return 0;
   }
 
+  const rap::writer& operator>>(const rap::writer& w) const {
+    for (size_t i = 0; i < size(); ++i) w << at(i);
+    w << text();
+    return w;
+  }
+
  protected:
   std::vector<text> data_;
 };
@@ -97,10 +103,9 @@ class headers : public kvv {
   }
 };
 
-const rap::writer& operator<<(const rap::writer& w, const rap::kvv& kvv) {
-  for (size_t i = 0; i < kvv.size(); ++i) w << kvv.at(i);
-  w << text();
-  return w;
+inline const rap::writer& operator<<(const rap::writer& w,
+                                     const rap::kvv& kvv) {
+  return kvv >> w;
 }
 
 }  // namespace rap
