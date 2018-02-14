@@ -8,6 +8,13 @@
 
 #include "rap_header.h"
 
+enum {
+  rap_frame_max_size = 0x10000, /**< Maximum frame size on the wire. */
+  rap_frame_max_payload_size =
+      rap_frame_max_size -
+      rap_frame_header_size, /**< Maximum allowed frame payload size. */
+};
+
 struct rap_frame {
   static size_t needed_bytes(const char* src_ptr) {
     return reinterpret_cast<const rap_header*>(src_ptr)->size();

@@ -6,15 +6,7 @@
 
 enum {
   rap_conn_exchange_id = 0x1fff,
-  rap_max_exchange_id = rap_conn_exchange_id - 1
-};
-
-enum {
-  rap_frame_header_size = 4,    /**< Number of octets in a rap frame header. */
-  rap_frame_max_size = 0x10000, /**< Maximum frame size on the wire. */
-  rap_frame_max_payload_size =
-      rap_frame_max_size -
-      rap_frame_header_size, /**< Maximum allowed frame payload size. */
+  rap_frame_header_size = 4    /**< Number of octets in a rap frame header. */
 };
 
 struct rap_header {
@@ -70,7 +62,7 @@ struct rap_header {
   bool has_body() const { return (buf_[2] & mask_body) != 0; }
   void set_body() { buf_[2] |= mask_body; }
 
-  unsigned char buf_[4];
+  unsigned char buf_[rap_frame_header_size];
 };
 
 #endif  // RAP_HEADER_H

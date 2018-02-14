@@ -1,8 +1,13 @@
 #ifndef RAP_CONNBASE_HPP
 #define RAP_CONNBASE_HPP
 
+#include "rap_header.h"
 #include "rap.hpp"
 #include "rap_stats.hpp"
+
+enum {
+  rap_max_exchange_id = rap_conn_exchange_id - 1
+};
 
 namespace rap {
 
