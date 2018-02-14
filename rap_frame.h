@@ -1,28 +1,28 @@
-#ifndef RAP_FRAME_HPP
-#define RAP_FRAME_HPP
+#ifndef RAP_FRAME_H
+#define RAP_FRAME_H
 
-#include <cassert>
-#include <cstdint>
+#include <assert.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
 
-#include "rap_header.hpp"
+#include "rap_header.h"
 
-namespace rap {
-
-struct frame {
+struct rap_frame {
   static size_t needed_bytes(const char* src_ptr) {
-    return reinterpret_cast<const rap::header*>(src_ptr)->size();
+    return reinterpret_cast<const rap_header*>(src_ptr)->size();
   }
 
-  static frame* factory(const char* src_ptr, size_t src_len) {
+  static rap_frame* factory(const char* src_ptr, size_t src_len) {
     assert(src_ptr != NULL);
     assert(rap_frame_header_size <= src_len);
     assert(needed_bytes(src_ptr) == src_len);
-    return reinterpret_cast<const frame*>(src_ptr)->copy();
+    return reinterpret_cast<const rap_frame*>(src_ptr)->copy();
   }
 
-  frame* copy() const {
+  rap_frame* copy() const {
     size_t src_len = size();
-    if (frame* f = static_cast<frame*>(malloc(src_len))) {
+    if (rap_frame* f = static_cast<rap_frame*>(malloc(src_len))) {
       memcpy(f, this, src_len);
       assert(f->size() == src_len);
       return f;
@@ -30,10 +30,10 @@ struct frame {
     return NULL;
   }
 
-  const rap::header& header() const {
-    return *reinterpret_cast<const rap::header*>(this);
+  const rap_header& header() const {
+    return *reinterpret_cast<const rap_header*>(this);
   }
-  rap::header& header() { return *reinterpret_cast<rap::header*>(this); }
+  rap_header& header() { return *reinterpret_cast<rap_header*>(this); }
   const char* data() const { return reinterpret_cast<const char*>(this); }
   char* data() { return reinterpret_cast<char*>(this); }
   size_t size() const { return header().size(); }
@@ -45,7 +45,7 @@ struct frame {
 };
 
 struct framelink {
-  static void enqueue(framelink** pp_fl, const frame* f) {
+  static void enqueue(framelink** pp_fl, const rap_frame* f) {
     if (f != NULL) {
       size_t framesize = f->size();
       if (framelink* p_fl = reinterpret_cast<framelink*>(
@@ -73,6 +73,4 @@ struct framelink {
   framelink* next;
 };
 
-}  // namespace rap
-
-#endif  // RAP_FRAME_HPP
+#endif  // RAP_FRAME_H

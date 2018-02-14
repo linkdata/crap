@@ -1,8 +1,8 @@
 #ifndef RAP_HEAD_HPP
 #define RAP_HEAD_HPP
 
+#include "rap_frame.h"
 #include "rap.hpp"
-#include "rap_frame.hpp"
 #include "rap_text.hpp"
 
 #include <cassert>
@@ -32,10 +32,10 @@ class record {
     sb.sputc(static_cast<char>(n));
   }
 
-  explicit record(const rap::frame* f) : frame_(f) {}
+  explicit record(const rap_frame* f) : frame_(f) {}
 
  protected:
-  const rap::frame* frame_;
+  const rap_frame* frame_;
 };
 
 }  // namespace rap

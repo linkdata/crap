@@ -4,15 +4,9 @@
 #include <cstdint>
 #include <string>
 
-namespace rap {
+#include "rap_header.h"
 
-enum {
-  rap_frame_header_size = 4,    /**< Number of octets in a rap frame header. */
-  rap_frame_max_size = 0x10000, /**< Maximum frame size on the wire. */
-  rap_frame_max_payload_size =
-      rap_frame_max_size -
-      rap_frame_header_size, /**< Maximum allowed frame payload size. */
-};
+namespace rap {
 
 typedef enum {
   rap_err_ok = 0,
@@ -45,11 +39,6 @@ typedef enum {
   rap_frame_flag_body = 0x20,
 } rap_frame_flag;
 
-enum {
-  rap_conn_exchange_id = 0x1fff,
-  rap_max_exchange_id = rap_conn_exchange_id - 1
-};
-
 typedef char record_type;
 enum {
   RecordTypeHTTPRequest = record_type(0x01),
@@ -58,8 +47,6 @@ enum {
 
 typedef std::string string_t;
 
-class header;
-struct frame;
 class text;
 class kvv;
 class exchange;

@@ -2,17 +2,14 @@
 #include <cassert>
 #include <cstdlib>
 
+#include "rap_frame.h"
 #include "rap_conn.hpp"
-#include "rap_frame.hpp"
 
 #define RAP_CONN_DEFINED 1
 typedef rap::conn rap_conn;
 
 #define RAP_EXCHANGE_DEFINED 1
 typedef rap::exchange rap_exchange;
-
-#define RAP_FRAME_DEFINED 1
-typedef rap::frame rap_frame;
 
 #include "crap.h"
 

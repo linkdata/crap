@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include "rap_frame.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -22,11 +24,6 @@ typedef void rap_conn;
 typedef void rap_exchange;
 #endif
 
-#ifndef RAP_FRAME_DEFINED
-#define RAP_FRAME_DEFINED 1
-typedef void rap_frame;
-#endif
-
 #ifndef RAP_PARSER_DEFINED
 #define RAP_PARSER_DEFINED 1
 typedef void rap_parser;
@@ -42,19 +39,6 @@ enum {
   rap_tag_service_resume = rap_tag('\x06'),
   rap_tag_user_first = rap_tag('\x80'),
   rap_tag_invalid = rap_tag(0)
-};
-
-enum {
-  rap_conn_exchange_id = 0x1fff,
-  rap_max_exchange_id = rap_conn_exchange_id - 1
-};
-
-enum {
-  rap_frame_header_size = 4,    /**< Number of octets in a rap frame header. */
-  rap_frame_max_size = 0x10000, /**< Maximum frame size on the wire. */
-  rap_frame_max_payload_size =
-      rap_frame_max_size -
-      rap_frame_header_size, /**< Maximum allowed frame payload size. */
 };
 
 /*

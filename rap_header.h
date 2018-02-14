@@ -1,27 +1,37 @@
-#ifndef RAP_HEADER_HPP
-#define RAP_HEADER_HPP
+#ifndef RAP_HEADER_H
+#define RAP_HEADER_H
 
-#include <cassert>
-#include <cstdint>
+#include <assert.h>
+#include <stdint.h>
 
-namespace rap {
+enum {
+  rap_conn_exchange_id = 0x1fff,
+  rap_max_exchange_id = rap_conn_exchange_id - 1
+};
 
-class header {
- public:
+enum {
+  rap_frame_header_size = 4,    /**< Number of octets in a rap frame header. */
+  rap_frame_max_size = 0x10000, /**< Maximum frame size on the wire. */
+  rap_frame_max_payload_size =
+      rap_frame_max_size -
+      rap_frame_header_size, /**< Maximum allowed frame payload size. */
+};
+
+struct rap_header {
   // these masks apply to buf_[2]
   static const unsigned char mask_final = 0x80;
   static const unsigned char mask_head = 0x40;
   static const unsigned char mask_body = 0x20;
   static const unsigned char mask_id = (rap_conn_exchange_id >> 8);
 
-  header() {
+  rap_header() {
     buf_[0] = 0;
     buf_[1] = 0;
     buf_[2] = 0;
     buf_[3] = 0;
   }
 
-  explicit header(uint16_t id) {
+  explicit rap_header(uint16_t id) {
     buf_[0] = 0;
     buf_[1] = 0;
     buf_[2] = static_cast<unsigned char>((id >> 8) & mask_id);
@@ -60,10 +70,7 @@ class header {
   bool has_body() const { return (buf_[2] & mask_body) != 0; }
   void set_body() { buf_[2] |= mask_body; }
 
- private:
   unsigned char buf_[4];
 };
 
-}  // namespace rap
-
-#endif  // RAP_HEADER_HPP
+#endif  // RAP_HEADER_H

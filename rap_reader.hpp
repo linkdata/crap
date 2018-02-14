@@ -1,8 +1,8 @@
 #ifndef RAP_READER_HPP
 #define RAP_READER_HPP
 
+#include "rap_frame.h"
 #include "rap.hpp"
-#include "rap_frame.hpp"
 #include "rap_record.hpp"
 #include "rap_text.hpp"
 
@@ -13,7 +13,7 @@ namespace rap {
 
 class reader {
  public:
-  reader(const rap::frame* f)
+  reader(const rap_frame* f)
       : frame_(f),
         src_ptr_(f->payload()),
         src_end_(f->payload() + f->payload_size()),
@@ -104,7 +104,7 @@ class reader {
 
   void consume() { src_ptr_ = src_end_; }
 
-  const rap::frame* frame() const { return frame_; }
+  const rap_frame* frame() const { return frame_; }
   uint16_t id() const { return frame_->header().id(); }
   bool eof() const { return error_ || src_ptr_ >= src_end_; }
   rap::error error() const { return error_; }
@@ -112,7 +112,7 @@ class reader {
   size_t size() const { return src_end_ - src_ptr_; }
 
  private:
-  const rap::frame* frame_;
+  const rap_frame* frame_;
   const char* src_ptr_;
   const char* src_end_;
   rap::error error_;

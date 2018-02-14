@@ -9,7 +9,7 @@ namespace rap {
 class connbase {
  public:
   typedef int (*write_cb_t)(void*, const char*, int);
-  typedef int (*frame_cb_t)(void*, const frame*, int);
+  typedef int (*frame_cb_t)(void*, const rap_frame*, int);
 
   static const int16_t max_send_window = 8;
 
@@ -41,7 +41,7 @@ class connbase {
       **/
   }
 
-  int frame_cb(const frame* f, int len) {
+  int frame_cb(const rap_frame* f, int len) {
     return frame_cb_(frame_cb_param_, f, len);
   }
 

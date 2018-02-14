@@ -6,10 +6,10 @@
 #include <cstdint>
 #include <vector>
 
+#include "rap_frame.h"
 #include "rap.hpp"
 #include "rap_connbase.hpp"
 #include "rap_exchange.hpp"
-#include "rap_frame.hpp"
 #include "rap_text.hpp"
 
 namespace rap {
@@ -30,7 +30,7 @@ class conn : connbase {
     }
   }
 
-  void process_conn(const frame* f) { assert(!"TODO!"); }
+  void process_conn(const rap_frame* f) { assert(!"TODO!"); }
 
   // consume up to 'len' bytes of data from 'p',
   // return negative value on error.
@@ -50,7 +50,7 @@ class conn : connbase {
       }
 
       // copy data until frame is complete
-      size_t frame_len = frame::needed_bytes(frame_buf_);
+      size_t frame_len = rap_frame::needed_bytes(frame_buf_);
       assert(frame_len <= sizeof(frame_buf_));
       const char* frame_end = frame_buf_ + frame_len;
       assert(frame_end <= frame_buf_ + sizeof(frame_buf_));
@@ -61,7 +61,7 @@ class conn : connbase {
       }
 
       // frame completed
-      const frame* f = reinterpret_cast<const frame*>(frame_buf_);
+      const rap_frame* f = reinterpret_cast<const rap_frame*>(frame_buf_);
       uint16_t id = f->header().id();
       if (id == rap_conn_exchange_id) {
         process_conn(f);

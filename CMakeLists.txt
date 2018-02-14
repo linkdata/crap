@@ -34,12 +34,17 @@ endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories($ENV{INCLUDE})
 add_executable(crapper
+  crapper.cpp
+  crap.cpp
+  crap.h
+
+  rap_header.h
+  rap_frame.h
+
   rap.hpp
   rap_connbase.hpp
   rap_conn.hpp
   rap_exchange.hpp
-  rap_frame.hpp
-  rap_header.hpp
   rap_kvv.hpp
   rap_reader.hpp
   rap_record.hpp
@@ -50,9 +55,5 @@ add_executable(crapper
   rap_textmap.c
   rap_textmap.gperf
   rap_writer.hpp
-
-  crap.cpp
-  crap.h
-  crapper.cpp
 )
 target_link_libraries(crapper ${Boost_LIBRARIES})

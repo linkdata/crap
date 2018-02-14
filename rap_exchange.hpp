@@ -7,7 +7,7 @@
 
 #include "rap.hpp"
 #include "rap_connbase.hpp"
-#include "rap_frame.hpp"
+#include "rap_frame.h"
 #include "rap_reader.hpp"
 
 namespace rap {
@@ -35,13 +35,13 @@ class exchange : public std::streambuf {
     id_ = rap_conn_exchange_id;
   }
 
-  const rap::header& header() const {
-    return *reinterpret_cast<const rap::header*>(buf_.data());
+  const rap_header& header() const {
+    return *reinterpret_cast<const rap_header*>(buf_.data());
   }
 
-  rap::header& header() { return *reinterpret_cast<rap::header*>(buf_.data()); }
+  rap_header& header() { return *reinterpret_cast<rap_header*>(buf_.data()); }
 
-  error write_frame(const frame* f) {
+  error write_frame(const rap_frame* f) {
     if (error e = write_queue()) return e;
     if (send_window_ < 1) {
 #ifndef NDEBUG
@@ -53,7 +53,7 @@ class exchange : public std::streambuf {
     return send_frame(f);
   }
 
-  bool process_frame(const frame* f, error& ec) {
+  bool process_frame(const rap_frame* f, error& ec) {
     if (!f->header().has_payload()) {
       ++send_window_;
       ec = write_queue();
@@ -122,7 +122,7 @@ class exchange : public std::streambuf {
 
   int exchange::sync() {
     header().set_size_value(pptr() - (buf_.data() + rap_frame_header_size));
-    if (write_frame(reinterpret_cast<frame*>(buf_.data()))) {
+    if (write_frame(reinterpret_cast<rap_frame*>(buf_.data()))) {
       assert(!"rap::exchange::sync(): write_frame() failed");
       return -1;
     }
@@ -148,7 +148,7 @@ class exchange : public std::streambuf {
 
   error exchange::write_queue() {
     while (queue_ != NULL) {
-      frame* f = reinterpret_cast<frame*>(queue_ + 1);
+      rap_frame* f = reinterpret_cast<rap_frame*>(queue_ + 1);
       if (!f->header().is_final() && send_window_ < 1) return rap_err_ok;
       if (error e = send_frame(f)) return e;
       framelink::dequeue(&queue_);
@@ -156,7 +156,7 @@ class exchange : public std::streambuf {
     return rap_err_ok;
   }
 
-  error exchange::send_frame(const frame* f) {
+  error exchange::send_frame(const rap_frame* f) {
     if (error e = conn_.write(f->data(), static_cast<int>(f->size()))) {
       assert(!"rap::exchange::send_frame(): conn_.write() failed");
       return e;
