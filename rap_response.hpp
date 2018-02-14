@@ -1,14 +1,14 @@
 #ifndef RAP_RESPONSE_HPP
 #define RAP_RESPONSE_HPP
 
+#include <ostream>
+
 #include "rap.hpp"
 #include "rap_kvv.hpp"
 #include "rap_reader.hpp"
 #include "rap_record.hpp"
 #include "rap_text.hpp"
 #include "rap_writer.hpp"
-
-#include <ostream>
 
 namespace rap {
 
