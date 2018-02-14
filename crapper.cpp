@@ -38,7 +38,7 @@ class session : public std::enable_shared_from_this<session> {
 
   void start() {
     if (!conn_) conn_ = rap_conn_create(s_write_cb, this, s_frame_cb, this);
-    do_read();
+    read_stream();
   }
 
  private:
@@ -89,10 +89,14 @@ class session : public std::enable_shared_from_this<session> {
     boost::asio::async_write(
         socket_, boost::asio::buffer(src_ptr, src_len),
         [this, self](boost::system::error_code ec, std::size_t length) {
-          if (!ec) {
+          if (ec) {
+            fprintf(stderr, "rapper::conn::write_stream(%s, %lu)\n",
+                    ec.message().c_str(), static_cast<unsigned long>(length));
+            buf_writing_.clear();
+          } else {
             write_stream_ok(length);
-            write_some();
           }
+          write_some();
         });
     return;
   }
@@ -103,17 +107,25 @@ class session : public std::enable_shared_from_this<session> {
     return;
   }
 
-  void do_read() {
+  void read_stream() {
     auto self(shared_from_this());
     socket_.async_read_some(
         boost::asio::buffer(data_, max_length),
         [this, self](boost::system::error_code ec, std::size_t length) {
+          if (ec) {
+            fprintf(stderr, "rapper::conn::read_stream(%s, %lu)\n",
+                    ec.message().c_str(), static_cast<unsigned long>(length));
+          }
           if (!ec) {
             int rap_ec = rap_conn_recv(conn_, data_, (int)length);
-            if (!rap_ec) {
-              do_read();
+            if (rap_ec < 0) {
+              fprintf(stderr, "rapper::conn::read_stream(): rap error %d\n",
+                      rap_ec);
+            } else {
+              assert(rap_ec == (int)length);
             }
           }
+          read_stream();
         });
   }
 
