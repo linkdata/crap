@@ -7,10 +7,10 @@
 
 #include "rap.hpp"
 #include "rap_connbase.hpp"
-#include "rap_response.hpp"
 #include "rap_frame.h"
 #include "rap_reader.hpp"
 #include "rap_request.hpp"
+#include "rap_response.hpp"
 #include "rap_writer.hpp"
 
 namespace rap {
@@ -21,15 +21,13 @@ class exchange {
       : conn_(other.conn_),
         queue_(NULL),
         id_(other.id_ == rap_conn_exchange_id ? conn_.next_id() : other.id_),
-        send_window_(other.send_window_) {
-  }
+        send_window_(other.send_window_) {}
 
   explicit exchange(rap::connbase& conn)
       : conn_(conn),
         queue_(NULL),
         id_(rap_conn_exchange_id),
-        send_window_(conn.send_window()) {
-  }
+        send_window_(conn.send_window()) {}
 
   virtual ~exchange() {
     while (queue_) framelink::dequeue(&queue_);

@@ -51,13 +51,15 @@ enum {
 typedef int (*rap_conn_write_cb_t)(void* write_cb_param, const char* p, int n);
 
 /*
-    rap_conn_frame_cb(void* frame_cb_param, rap_exchange* exch, const rap_frame* f, int n)
+    rap_conn_frame_cb(void* frame_cb_param, rap_exchange* exch, const rap_frame*
+   f, int n)
 
     The frame callback is invoked when a new frame is received for
     an exchange.
     A nonzero return value indicates the connection should terminate.
 */
-typedef int (*rap_conn_frame_cb_t)(void* frame_cb_param, rap_exchange* exch, const rap_frame* f, int n);
+typedef int (*rap_conn_frame_cb_t)(void* frame_cb_param, rap_exchange* exch,
+                                   const rap_frame* f, int n);
 
 /*
  * Network-side connection-level API
@@ -71,7 +73,8 @@ typedef int (*rap_conn_frame_cb_t)(void* frame_cb_param, rap_exchange* exch, con
  * to free up the RAP connection resources.
  */
 
-rap_conn* rap_conn_create(rap_conn_write_cb_t write_cb, void* write_cb_param, rap_conn_frame_cb_t frame_cb, void* frame_cb_param);
+rap_conn* rap_conn_create(rap_conn_write_cb_t write_cb, void* write_cb_param,
+                          rap_conn_frame_cb_t frame_cb, void* frame_cb_param);
 int rap_conn_recv(rap_conn* conn, const char* buf, int len);
 void rap_conn_destroy(rap_conn* conn);
 

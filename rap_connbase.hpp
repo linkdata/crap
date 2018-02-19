@@ -2,8 +2,8 @@
 #define RAP_CONNBASE_HPP
 
 #include "rap.hpp"
-#include "rap_header.h"
 #include "rap_frame.h"
+#include "rap_header.h"
 #include "rap_stats.hpp"
 
 enum { rap_max_exchange_id = rap_conn_exchange_id - 1 };

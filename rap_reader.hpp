@@ -1,8 +1,8 @@
 #ifndef RAP_READER_HPP
 #define RAP_READER_HPP
 
-#include "rap_frame.h"
 #include "rap.hpp"
+#include "rap_frame.h"
 #include "rap_record.hpp"
 #include "rap_text.hpp"
 

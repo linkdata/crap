@@ -2,8 +2,8 @@
 #define RAP_FRAME_H
 
 #include <assert.h>
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "rap_header.h"
