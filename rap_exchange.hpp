@@ -2,32 +2,31 @@
 #define RAP_EXCHANGE_HPP
 
 #include <cstdint>
-#include <streambuf>
-#include <vector>
 
 #include "rap.hpp"
 #include "rap_connbase.hpp"
 #include "rap_frame.h"
-#include "rap_reader.hpp"
-#include "rap_request.hpp"
-#include "rap_response.hpp"
-#include "rap_writer.hpp"
 
 namespace rap {
 
 class exchange {
  public:
-  explicit exchange(const exchange& other)
-      : conn_(other.conn_),
-        queue_(NULL),
-        id_(other.id_ == rap_conn_exchange_id ? conn_.next_id() : other.id_),
-        send_window_(other.send_window_) {}
-
-  explicit exchange(rap::connbase& conn)
-      : conn_(conn),
+  explicit exchange()
+      : conn_(NULL),
         queue_(NULL),
         id_(rap_conn_exchange_id),
-        send_window_(conn.send_window()) {}
+        send_window_(0) {}
+
+  void init(rap::connbase* conn, uint16_t id) {
+    conn_ = conn;
+    id_ = id;
+    send_window_ = conn->send_window();
+
+    ack_[0] = '\0';
+    ack_[1] = '\0';
+    ack_[2] = static_cast<char>(id_ >> 8);
+    ack_[3] = static_cast<char>(id_);
+  }
 
   virtual ~exchange() {
     while (queue_) framelink::dequeue(&queue_);
@@ -58,15 +57,16 @@ class exchange {
     return true;
   }
 
-  rap::connbase& conn() const { return conn_; }
+  rap::connbase* conn() const { return conn_; }
   uint16_t id() const { return id_; }
   int16_t send_window() const { return send_window_; }
 
  private:
-  rap::connbase& conn_;
+  rap::connbase* conn_;
   framelink* queue_;
   uint16_t id_;
   int16_t send_window_;
+  char ack_[4];
 
   error exchange::write_queue() {
     while (queue_ != NULL) {
@@ -79,7 +79,7 @@ class exchange {
   }
 
   error exchange::send_frame(const rap_frame* f) {
-    if (error e = conn_.write(f->data(), static_cast<int>(f->size()))) {
+    if (error e = conn_->write(f->data(), static_cast<int>(f->size()))) {
       assert(!"rap::exchange::send_frame(): conn_.write() failed");
       return e;
     }
@@ -88,12 +88,7 @@ class exchange {
   }
 
   error exchange::send_ack() {
-    char buf[4];
-    buf[0] = '\0';
-    buf[1] = '\0';
-    buf[2] = static_cast<char>(id_ >> 8);
-    buf[3] = static_cast<char>(id_);
-    return conn_.write(buf, 4);
+    return conn_->write(ack_, sizeof(ack_));
   }
 };
 

@@ -20,11 +20,12 @@ class conn : connbase {
                       frame_cb_t frame_cb, void* frame_cb_param)
       : connbase(write_cb, write_cb_param, frame_cb, frame_cb_param),
         frame_ptr_(frame_buf_),
-        exchanges_(rap_max_exchange_id + 1, rap::exchange(*this)) {
+        exchanges_(rap_max_exchange_id + 1) {
     // assert correctly initialized exchange vector
     assert(exchanges_.size() == rap_max_exchange_id + 1);
     for (uint16_t id = 0; id < exchanges_.size(); ++id) {
-      assert(&(exchanges_[id].conn()) == this);
+      exchanges_[id].init(this, id);
+      assert(exchanges_[id].conn() == this);
       assert(exchanges_[id].id() == id);
       assert(exchanges_[id].send_window() == send_window());
     }
