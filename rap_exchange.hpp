@@ -17,7 +17,7 @@ class exchange {
         id_(rap_conn_exchange_id),
         send_window_(0) {}
 
-  void init(rap::connbase* conn, uint16_t id) {
+  void init(const rap::connbase* conn, uint16_t id) {
     conn_ = conn;
     id_ = id;
     send_window_ = conn->send_window();
@@ -57,12 +57,12 @@ class exchange {
     return true;
   }
 
-  rap::connbase* conn() const { return conn_; }
+  const rap::connbase* conn() const { return conn_; }
   uint16_t id() const { return id_; }
   int16_t send_window() const { return send_window_; }
 
  private:
-  rap::connbase* conn_;
+  const rap::connbase* conn_;
   framelink* queue_;
   uint16_t id_;
   int16_t send_window_;

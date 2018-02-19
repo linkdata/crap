@@ -35,15 +35,11 @@ class connbase {
     return next_id_++;
   }
 
-  rap::error write(const char* src_ptr, int src_len) {
+  rap::error write(const char* src_ptr, int src_len) const {
     if (!src_ptr || src_len < 0 || !write_cb_) return rap_err_invalid_parameter;
     return write_cb_(write_cb_param_, src_ptr, src_len) < 0
                ? rap_err_payload_too_big
                : rap_err_ok;
-    /*
-      buf_towrite_.insert(buf_towrite_.end(), src_ptr, src_ptr + src_len);
-      write_some();
-      **/
   }
 
   int frame_cb(rap::exchange* exch, const rap_frame* f, int len) {
