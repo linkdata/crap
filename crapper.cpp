@@ -283,7 +283,7 @@ class session : public std::enable_shared_from_this<session> {
         });
   }
 
-  enum { max_length = 1024 };
+  enum { max_length = 65536 };
   tcp::socket socket_;
   char data_[max_length];
   std::vector<char> buf_towrite_;
@@ -331,9 +331,21 @@ class server {
   void do_accept() {
     acceptor_.async_accept(socket_, [this](boost::system::error_code ec) {
       if (!ec) {
+        boost::asio::ip::tcp::no_delay no_delay_option;
+        boost::asio::socket_base::receive_buffer_size
+            receive_buffer_size_option;
+        boost::asio::socket_base::send_buffer_size send_buffer_size_option;
+        socket_.get_option(no_delay_option);
+        socket_.get_option(receive_buffer_size_option);
+        socket_.get_option(send_buffer_size_option);
+        /*
+                fprintf(stderr,
+                        "connection established (no_delay %d, recv %d, send
+           %d)\n", no_delay_option.value(), receive_buffer_size_option.value(),
+                        send_buffer_size_option.value());
+        */
         std::make_shared<session>(std::move(socket_), stats_)->start();
       }
-
       do_accept();
     });
   }
