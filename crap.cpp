@@ -36,14 +36,6 @@ extern "C" void rap_conn_destroy(rap_conn* conn) {
 
 extern "C" int rap_exch_get_id(const rap_exchange* exch) { return exch->id(); }
 
-extern "C" void* rap_exch_get_userdata(const rap_exchange* exch) {
-  return NULL;
-}
-
-extern "C" void rap_exch_set_userdata(rap_exchange* exch, void* userdata) {
-  return;
-}
-
 int rap_exch_write_frame(rap_exchange* exch, const rap_frame* f) {
   return exch->write_frame(f);
 }

@@ -87,8 +87,6 @@ void rap_conn_destroy(rap_conn* conn);
  */
 
 int rap_exch_get_id(const rap_exchange* exch);
-void* rap_exch_get_userdata(const rap_exchange* exch);
-void rap_exch_set_userdata(rap_exchange* exch, void* userdata);
 int rap_exch_write_frame(rap_exchange* exch, const rap_frame* f);
 
 /*
