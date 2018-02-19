@@ -52,7 +52,7 @@ class exchange {
       return false;
     }
     if (!f->header().is_final()) {
-      if (ec = send_ack()) return false;
+      if ((ec = send_ack())) return false;
     }
     return true;
   }
@@ -68,7 +68,7 @@ class exchange {
   int16_t send_window_;
   char ack_[4];
 
-  error exchange::write_queue() {
+  error write_queue() {
     while (queue_ != NULL) {
       rap_frame* f = reinterpret_cast<rap_frame*>(queue_ + 1);
       if (!f->header().is_final() && send_window_ < 1) return rap_err_ok;
@@ -78,7 +78,7 @@ class exchange {
     return rap_err_ok;
   }
 
-  error exchange::send_frame(const rap_frame* f) {
+  error send_frame(const rap_frame* f) {
     if (error e = conn_->write(f->data(), static_cast<int>(f->size()))) {
       assert(!"rap::exchange::send_frame(): conn_.write() failed");
       return e;
@@ -87,7 +87,7 @@ class exchange {
     return rap_err_ok;
   }
 
-  error exchange::send_ack() {
+  error send_ack() {
     return conn_->write(ack_, sizeof(ack_));
   }
 };

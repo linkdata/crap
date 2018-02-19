@@ -16,7 +16,7 @@ namespace rap {
 
 class conn : connbase {
  public:
-  explicit conn::conn(write_cb_t write_cb, void* write_cb_param,
+  explicit conn(write_cb_t write_cb, void* write_cb_param,
                       frame_cb_t frame_cb, void* frame_cb_param)
       : connbase(write_cb, write_cb_param, frame_cb, frame_cb_param),
         frame_ptr_(frame_buf_),

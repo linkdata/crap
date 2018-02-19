@@ -71,7 +71,7 @@ class exchange : public std::streambuf {
   }
 
  protected:
-  exchange::int_type exchange::overflow(int_type ch) {
+  exchange::int_type overflow(int_type ch) {
     if (buf_.size() < rap_frame_max_size) {
       size_t new_size = buf_.size() * 2;
       if (new_size > rap_frame_max_size) new_size = rap_frame_max_size;
@@ -107,7 +107,7 @@ class exchange : public std::streambuf {
 
   int write_frame(const rap_frame* f) { return rap_exch_write_frame(exch_, f); }
 
-  int exchange::sync() {
+  int sync() {
     header().set_size_value(pptr() - (buf_.data() + rap_frame_header_size));
     if (write_frame(reinterpret_cast<rap_frame*>(buf_.data()))) {
       assert(!"rap::exchange::sync(): write_frame() failed");
@@ -123,7 +123,7 @@ class exchange : public std::streambuf {
   std::vector<char> buf_;
   rap::string_t req_echo_;
 
-  void exchange::start_write() {
+  void start_write() {
     if (buf_.size() < 256) buf_.resize(256);
     buf_[0] = '\0';
     buf_[1] = '\0';
