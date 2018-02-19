@@ -48,34 +48,45 @@ enum {
     A nonzero return value indicates the network socket has been
     closed and connection should terminate.
 */
-typedef int (*rap_conn_write_cb_t)(void*, const char*, int);
+typedef int (*rap_conn_write_cb_t)(void* write_cb_param, const char* p, int n);
 
 /*
-    rap_conn_frame_cb(void* userdata, const rap_frame* f, int len)
+    rap_conn_frame_cb(void* frame_cb_param, rap_exchange* exch, const rap_frame* f, int n)
 
-    The frame callback is invoked when a new frame is received.
+    The frame callback is invoked when a new frame is received for
+    an exchange.
     A nonzero return value indicates the connection should terminate.
 */
-typedef int (*rap_conn_frame_cb_t)(void* userdata, const rap_frame*, int);
+typedef int (*rap_conn_frame_cb_t)(void* frame_cb_param, rap_exchange* exch, const rap_frame* f, int n);
 
 /*
-    Network-side connection-level API
+ * Network-side connection-level API
+ *
+ * For each listening port (usually on 10111), create a RAP
+ * connection with callbacks for writing to the network and
+ * handle incoming RAP frames.
+ * Then repeatedly call rap_conn_recv() to submit incoming
+ * network data. Once rap_conn_recv() returns a negative
+ * value, close the connection and call rap_conn_destroy()
+ * to free up the RAP connection resources.
+ */
 
-    The application listens for TCP connections on a port (usually 10111)
-    and for each one, starts two threads to service it, one thread for
-    reading network data and forwarding it to the library using
-    rap_conn_recv() and one for writing network data from the library
-    using rap_conn_send().
-
-    Once either of those functions return -1, both threads must terminate
-    and rap_conn_destroy() must be called to clean up.
-*/
-
-rap_conn* rap_conn_create(rap_conn_write_cb_t write_cb, void* write_cb_param,
-                          rap_conn_frame_cb_t frame_cb, void* frame_cb_param);
-void rap_conn_destroy(rap_conn* conn);
+rap_conn* rap_conn_create(rap_conn_write_cb_t write_cb, void* write_cb_param, rap_conn_frame_cb_t frame_cb, void* frame_cb_param);
 int rap_conn_recv(rap_conn* conn, const char* buf, int len);
-// int rap_conn_send(rap_conn* conn, char* buf, int max_len);
+void rap_conn_destroy(rap_conn* conn);
+
+/*
+ * Exchange level API
+ *
+ * When the application gets a `frame_cb` callback, one of the
+ * parameters is a `rap_exchange*`. That parameter may be used
+ * with these APIs.
+ */
+
+int rap_exch_get_id(const rap_exchange* exch);
+void* rap_exch_get_userdata(const rap_exchange* exch);
+void rap_exch_set_userdata(rap_exchange* exch, void* userdata);
+int rap_exch_write_frame(rap_exchange* exch, const rap_frame* f);
 
 /*
     Application-side connection-level API

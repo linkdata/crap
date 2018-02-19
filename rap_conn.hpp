@@ -68,7 +68,7 @@ class conn : connbase {
         error ec = rap_err_ok;
         if (exchanges_[id].process_frame(f, ec)) {
           if (f->header().has_head()) stats().head_count++;
-          frame_cb(f, static_cast<int>(frame_ptr_ - frame_buf_));
+          frame_cb(&exchanges_[id], f, static_cast<int>(frame_ptr_ - frame_buf_));
         }
         /*
         int ec = frame_cb_(cb_param_, frame_buf_, ); if (ec < 0) { frame_ptr_ =
