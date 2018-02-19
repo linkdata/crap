@@ -51,8 +51,11 @@ enum {
 typedef int (*rap_conn_write_cb_t)(void* write_cb_param, const char* p, int n);
 
 /*
-    rap_conn_frame_cb(void* frame_cb_param, rap_exchange* exch, const rap_frame*
-   f, int n)
+    int rap_exchange_cb(
+        void* exchange_cb_param,
+        rap_exchange* exch,
+        const rap_frame* f,
+        int n)
 
     The frame callback is invoked when a new frame is received for
     an exchange.
@@ -80,33 +83,15 @@ void rap_conn_destroy(rap_conn* conn);
 
 /*
  * Exchange level API
- *
- * When the application gets a `frame_cb` callback, one of the
- * parameters is a `rap_exchange*`. That parameter may be used
- * with these APIs.
  */
 
 int rap_exch_get_id(const rap_exchange* exch);
-int rap_exch_set_callback(rap_exchange* exch, rap_exchange_cb_t frame_cb, void* frame_cb_param);
-int rap_exch_get_callback(const rap_exchange* exch, rap_exchange_cb_t* p_frame_cb,
+int rap_exch_set_callback(rap_exchange* exch, rap_exchange_cb_t exchange_cb,
+                          void* exchange_cb_param);
+int rap_exch_get_callback(const rap_exchange* exch,
+                          rap_exchange_cb_t* p_frame_cb,
                           void** p_frame_cb_param);
 int rap_exch_write_frame(rap_exchange* exch, const rap_frame* f);
-
-/*
-    Application-side connection-level API
-
-    Application runs a thread to recieve incoming
-    RAP frames for every connection. This may be the
-    same thread running rap_conn_recv(), as long as
-    it doesn't block during handling of frames.
-
-    Each frame dequeued is handled depending on it's
-    tag (record type).
-*/
-
-rap_exchange* rap_conn_accept(rap_conn* conn);
-rap_frame* rap_conn_frame_dequeue(rap_conn*);
-int rap_conn_frame_enqueue(rap_conn*, rap_frame*);
 
 /*
     Frame API
