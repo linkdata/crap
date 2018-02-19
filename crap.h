@@ -58,8 +58,8 @@ typedef int (*rap_conn_write_cb_t)(void* write_cb_param, const char* p, int n);
     an exchange.
     A nonzero return value indicates the connection should terminate.
 */
-typedef int (*rap_conn_frame_cb_t)(void* frame_cb_param, rap_exchange* exch,
-                                   const rap_frame* f, int n);
+typedef int (*rap_exchange_cb_t)(void* exchange_cb_param, rap_exchange* exch,
+                                 const rap_frame* f, int n);
 
 /*
  * Network-side connection-level API
@@ -73,9 +73,9 @@ typedef int (*rap_conn_frame_cb_t)(void* frame_cb_param, rap_exchange* exch,
  * to free up the RAP connection resources.
  */
 
-rap_conn* rap_conn_create(rap_conn_write_cb_t write_cb, void* write_cb_param,
-                          rap_conn_frame_cb_t frame_cb, void* frame_cb_param);
+rap_conn* rap_conn_create(rap_conn_write_cb_t write_cb, void* write_cb_param);
 int rap_conn_recv(rap_conn* conn, const char* buf, int len);
+rap_exchange* rap_conn_get_exchange(rap_conn*, int exchange_id);
 void rap_conn_destroy(rap_conn* conn);
 
 /*
@@ -87,6 +87,9 @@ void rap_conn_destroy(rap_conn* conn);
  */
 
 int rap_exch_get_id(const rap_exchange* exch);
+int rap_exch_set_callback(rap_exchange* exch, rap_exchange_cb_t frame_cb, void* frame_cb_param);
+int rap_exch_get_callback(const rap_exchange* exch, rap_exchange_cb_t* p_frame_cb,
+                          void** p_frame_cb_param);
 int rap_exch_write_frame(rap_exchange* exch, const rap_frame* f);
 
 /*

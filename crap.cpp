@@ -14,16 +14,17 @@ typedef rap::exchange rap_exchange;
 #include "crap.h"
 
 extern "C" rap_conn* rap_conn_create(rap_conn_write_cb_t write_cb,
-                                     void* write_cb_param,
-                                     rap_conn_frame_cb_t frame_cb,
-                                     void* frame_cb_param) {
-  return new rap::conn(write_cb, write_cb_param,
-                       (rap::connbase::frame_cb_t)frame_cb, frame_cb_param);
+                                     void* write_cb_param) {
+  return new rap::conn(write_cb, write_cb_param);
 }
 
 extern "C" int rap_conn_recv(rap_conn* conn, const char* buf,
                              int bytes_transferred) {
   return conn->read_stream(buf, bytes_transferred);
+}
+
+extern "C" rap_exchange* rap_conn_get_exchange(rap_conn* conn, int id) {
+  return conn->get_exchange(id);
 }
 
 extern "C" void rap_conn_destroy(rap_conn* conn) {
@@ -35,6 +36,18 @@ extern "C" void rap_conn_destroy(rap_conn* conn) {
  */
 
 extern "C" int rap_exch_get_id(const rap_exchange* exch) { return exch->id(); }
+
+extern "C" int rap_exch_set_callback(rap_exchange* exch,
+                                     rap_exchange_cb_t exchange_cb,
+                                     void* exchange_cb_param) {
+  return exch->set_callback(exchange_cb, exchange_cb_param);
+}
+
+extern "C" int rap_exch_get_callback(const rap_exchange* exch,
+                                     rap_exchange_cb_t* p_exchange_cb,
+                                     void** p_exchange_cb_param) {
+  return exch->get_callback(p_exchange_cb, p_exchange_cb_param);
+}
 
 int rap_exch_write_frame(rap_exchange* exch, const rap_frame* f) {
   return exch->write_frame(f);

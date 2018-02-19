@@ -16,19 +16,23 @@ namespace rap {
 
 class conn : connbase {
  public:
-  explicit conn(write_cb_t write_cb, void* write_cb_param,
-                      frame_cb_t frame_cb, void* frame_cb_param)
-      : connbase(write_cb, write_cb_param, frame_cb, frame_cb_param),
+  explicit conn(write_cb_t write_cb, void* write_cb_param)
+      : connbase(write_cb, write_cb_param),
         frame_ptr_(frame_buf_),
         exchanges_(rap_max_exchange_id + 1) {
     // assert correctly initialized exchange vector
     assert(exchanges_.size() == rap_max_exchange_id + 1);
     for (uint16_t id = 0; id < exchanges_.size(); ++id) {
-      exchanges_[id].init(this, id);
+      exchanges_[id].init(this, id, 0, 0);
       assert(exchanges_[id].conn() == this);
       assert(exchanges_[id].id() == id);
       assert(exchanges_[id].send_window() == send_window());
     }
+  }
+
+  rap::exchange* get_exchange(int id) {
+    if (id < 0 || id >= exchanges_.size()) return 0;
+    return &exchanges_[id];
   }
 
   void process_conn(const rap_frame* f) { assert(!"TODO!"); }
@@ -67,16 +71,8 @@ class conn : connbase {
         process_conn(f);
       } else if (id < exchanges_.size()) {
         error ec = rap_err_ok;
-        if (exchanges_[id].process_frame(f, ec)) {
-          if (f->header().has_head()) stats().head_count++;
-          frame_cb(&exchanges_[id], f,
-                   static_cast<int>(frame_ptr_ - frame_buf_));
-        }
-        /*
-        int ec = frame_cb_(cb_param_, frame_buf_, ); if (ec < 0) { frame_ptr_ =
-        frame_buf_; return ec;
-        }
-        */
+        exchanges_[id].process_frame(
+                f, static_cast<int>(frame_ptr_ - frame_buf_), ec);
       } else {
       // exchange id out of range
 #ifndef NDEBUG

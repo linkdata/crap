@@ -13,19 +13,13 @@ namespace rap {
 class connbase {
  public:
   typedef int (*write_cb_t)(void*, const char*, int);
-  typedef int (*frame_cb_t)(void*, rap::exchange*, const rap_frame*, int);
+  typedef int (*exchange_cb_t)(void*, rap::exchange*, const rap_frame*, int);
 
   static const int16_t max_send_window = 8;
 
-  explicit connbase(write_cb_t write_cb, void* write_cb_param,
-                    frame_cb_t frame_cb, void* frame_cb_param)
-      : next_id_(0),
-        write_cb_(write_cb),
-        write_cb_param_(write_cb_param),
-        frame_cb_(frame_cb),
-        frame_cb_param_(frame_cb_param) {
+  explicit connbase(write_cb_t write_cb, void* write_cb_param)
+      : next_id_(0), write_cb_(write_cb), write_cb_param_(write_cb_param) {
     assert(write_cb_ != 0);
-    assert(frame_cb_ != 0);
   }
   virtual ~connbase() {}
 
@@ -42,21 +36,12 @@ class connbase {
                : rap_err_ok;
   }
 
-  int frame_cb(rap::exchange* exch, const rap_frame* f, int len) {
-    return frame_cb_(frame_cb_param_, exch, f, len);
-  }
-
   int16_t send_window() const { return max_send_window; }
-  rap::stats& stats() { return stats_; }
-  const rap::stats& stats() const { return stats_; }
 
  protected:
   uint16_t next_id_;
   write_cb_t write_cb_;
   void* write_cb_param_;
-  frame_cb_t frame_cb_;
-  void* frame_cb_param_;
-  rap::stats stats_;
 };
 
 }  // namespace rap

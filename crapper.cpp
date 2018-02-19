@@ -23,11 +23,17 @@ using boost::asio::ip::tcp;
 
 class exchange : public std::streambuf {
  public:
-  explicit exchange() : exch_(0), id_(0) {}
+  explicit exchange() : exch_(0), stats_(0), id_(rap_max_exchange_id) {}
 
-  void init(rap_exchange* exch) {
+  void init(rap_exchange* exch, rap::stats* stats = 0) {
     exch_ = exch;
-    id_ = rap_exch_get_id(exch_);
+    stats_ = stats;
+    if (exch_) {
+      id_ = rap_exch_get_id(exch_);
+      rap_exch_set_callback(exch, s_exchange_cb, this);
+    } else {
+      id_ = rap_max_exchange_id;
+    }
     start_write();
   }
 
@@ -38,6 +44,30 @@ class exchange : public std::streambuf {
   }
 
   rap_header& header() { return *reinterpret_cast<rap_header*>(buf_.data()); }
+
+  static int s_exchange_cb(void* exchange_cb_param, rap_exchange* exch,
+                           const rap_frame* f, int len) {
+    return static_cast<exchange*>(exchange_cb_param)->exchange_cb(exch, f, len);
+  }
+
+  int exchange_cb(rap_exchange* exch, const rap_frame* f, int len) {
+    // TODO: thread safety?
+    assert(f != NULL);
+    assert(len >= rap_frame_header_size);
+    assert(len == rap_frame_header_size + f->header().payload_size());
+
+    const rap_header& hdr = f->header();
+    uint16_t id = hdr.id();
+
+    rap::reader r(f);
+    if (hdr.has_head()) {
+      if (stats_) stats_->head_count++;
+      process_head(r);
+    }
+    if (hdr.has_body()) process_body(r);
+    if (hdr.is_final()) process_final(r);
+    return 0;
+  }
 
   rap::error process_head(rap::reader& r) {
     if (r.read_tag() != rap::record::tag_http_request)
@@ -119,6 +149,7 @@ class exchange : public std::streambuf {
 
  private:
   rap_exchange* exch_;
+  rap::stats* stats_;
   uint16_t id_;
   std::vector<char> buf_;
   rap::string_t req_echo_;
@@ -149,7 +180,12 @@ class session : public std::enable_shared_from_this<session> {
   }
 
   void start() {
-    if (!conn_) conn_ = rap_conn_create(s_write_cb, this, s_frame_cb, this);
+    if (!conn_) {
+      conn_ = rap_conn_create(s_write_cb, this);
+      for (int i = 0; i < exchanges_.size(); ++i) {
+        exchanges_[i].init(rap_conn_get_exchange(conn_, i), &stats_);
+      }
+    }
     read_stream();
   }
 
@@ -158,40 +194,11 @@ class session : public std::enable_shared_from_this<session> {
     return static_cast<session*>(self)->write_cb(src_ptr, src_len);
   }
 
-  static int s_frame_cb(void* self, rap_exchange* exch, const rap_frame* f,
-                        int len) {
-    return static_cast<session*>(self)->frame_cb(exch, f, len);
-  }
-
   // may be called from a foreign thread via the callback
   int write_cb(const char* src_ptr, int src_len) {
     // TODO: thread safety?
     buf_towrite_.insert(buf_towrite_.end(), src_ptr, src_ptr + src_len);
     write_some();
-    return 0;
-  }
-
-  // may be called from a foreign thread via the callback
-  int frame_cb(rap_exchange* exch, const rap_frame* f, int len) {
-    // TODO: thread safety?
-    assert(f != NULL);
-    assert(len >= rap_frame_header_size);
-    assert(len == rap_frame_header_size + f->header().payload_size());
-
-    const rap_header& hdr = f->header();
-    uint16_t id = hdr.id();
-    exchange& ex = exchanges_[id];
-    if (ex.id() != id) {
-      ex.init(exch);
-    }
-
-    rap::reader r(f);
-    if (hdr.has_head()) {
-      ex.process_head(r);
-      stats_.head_count++;
-    }
-    if (hdr.has_body()) ex.process_body(r);
-    if (hdr.is_final()) ex.process_final(r);
     return 0;
   }
 
@@ -298,7 +305,8 @@ class server {
         last_write_iops_(0),
         last_write_bytes_(0),
         last_stat_mbps_in_(0),
-        last_stat_mbps_out_(0) {
+        last_stat_mbps_out_(0),
+        last_stat_rps_(0) {
     do_timer();
     do_accept();
   }
@@ -311,6 +319,7 @@ class server {
   uint64_t last_write_bytes_;
   uint64_t last_stat_mbps_in_;
   uint64_t last_stat_mbps_out_;
+  uint64_t last_stat_rps_;
 
  private:
   void do_timer() {
@@ -359,9 +368,11 @@ class server {
       last_write_bytes_ = n;
 
       if (stat_mbps_in_ != last_stat_mbps_in_ ||
-          stat_mbps_out_ != last_stat_mbps_out_) {
+          stat_mbps_out_ != last_stat_mbps_out_ ||
+          stat_rps_ != last_stat_rps_) {
         last_stat_mbps_in_ = stat_mbps_in_;
         last_stat_mbps_out_ = stat_mbps_out_;
+        last_stat_rps_ = stat_rps_;
         fprintf(
             stderr,
             "%llu Rps - IN: %llu Mbps, %llu iops - OUT: %llu Mbps, %llu iops\n",
