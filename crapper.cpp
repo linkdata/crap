@@ -23,22 +23,15 @@ using boost::asio::ip::tcp;
 
 class exchange : public std::streambuf {
  public:
-  explicit exchange()
-      : exch_(0)
-      , id_(0)
-    {
+  explicit exchange() : exch_(0), id_(0) {}
+
+  void init(rap_exchange* exch) {
+    exch_ = exch;
+    id_ = rap_exch_get_id(exch_);
+    start_write();
   }
 
-    void init(rap_exchange* exch)
-    {
-        exch_ = exch;
-        id_ = rap_exch_get_id(exch_);
-        start_write();
-    }
-
-    uint16_t id() const {
-        return id_;
-    }
+  uint16_t id() const { return id_; }
 
   const rap_header& header() const {
     return *reinterpret_cast<const rap_header*>(buf_.data());
@@ -112,9 +105,7 @@ class exchange : public std::streambuf {
     return ch;
   }
 
-  int write_frame(const rap_frame* f) {
-      return rap_exch_write_frame(exch_, f);
-  }
+  int write_frame(const rap_frame* f) { return rap_exch_write_frame(exch_, f); }
 
   int exchange::sync() {
     header().set_size_value(pptr() - (buf_.data() + rap_frame_header_size));
@@ -145,7 +136,10 @@ class exchange : public std::streambuf {
 class session : public std::enable_shared_from_this<session> {
  public:
   session(tcp::socket socket, rap::stats& stats)
-      : socket_(std::move(socket)), conn_(0), stats_(stats), exchanges_(rap_max_exchange_id+1) {}
+      : socket_(std::move(socket)),
+        conn_(0),
+        stats_(stats),
+        exchanges_(rap_max_exchange_id + 1) {}
 
   ~session() {
     if (conn_) {
@@ -164,7 +158,8 @@ class session : public std::enable_shared_from_this<session> {
     return static_cast<session*>(self)->write_cb(src_ptr, src_len);
   }
 
-  static int s_frame_cb(void* self, rap_exchange* exch, const rap_frame* f, int len) {
+  static int s_frame_cb(void* self, rap_exchange* exch, const rap_frame* f,
+                        int len) {
     return static_cast<session*>(self)->frame_cb(exch, f, len);
   }
 
@@ -187,7 +182,7 @@ class session : public std::enable_shared_from_this<session> {
     uint16_t id = hdr.id();
     exchange& ex = exchanges_[id];
     if (ex.id() != id) {
-        ex.init(exch);
+      ex.init(exch);
     }
 
     rap::reader r(f);
@@ -363,7 +358,8 @@ class server {
       stat_mbps_out_ = ((n - last_write_bytes_) * 8) / 1024 / 1024;
       last_write_bytes_ = n;
 
-      if (stat_mbps_in_ != last_stat_mbps_in_ || stat_mbps_out_ != last_stat_mbps_out_) {
+      if (stat_mbps_in_ != last_stat_mbps_in_ ||
+          stat_mbps_out_ != last_stat_mbps_out_) {
         last_stat_mbps_in_ = stat_mbps_in_;
         last_stat_mbps_out_ = stat_mbps_out_;
         fprintf(
