@@ -11,6 +11,7 @@
 #include <thread>
 #include <utility>
 
+#include "rap.hpp"
 #include "rap_conn.hpp"
 #include "rap_exchange.hpp"
 #include "rap_reader.hpp"
@@ -18,13 +19,14 @@
 #include "rap_response.hpp"
 #include "rap_stats.hpp"
 
+/* crap.h must be included after rap.hpp */
 #include "crap.h"
 
 using boost::asio::ip::tcp;
 
 class exchange : public std::streambuf {
  public:
-  explicit exchange() : exch_(0), stats_(0), id_(rap_max_exchange_id) {}
+  explicit exchange() : exch_(0), stats_(0), id_(rap_conn_exchange_id) {}
 
   void init(rap_exchange* exch, rap::stats* stats = 0) {
     exch_ = exch;
@@ -32,8 +34,6 @@ class exchange : public std::streambuf {
     if (exch_) {
       id_ = rap_exch_get_id(exch_);
       rap_exch_set_callback(exch, s_exchange_cb, this);
-    } else {
-      id_ = rap_max_exchange_id;
     }
     start_write();
   }

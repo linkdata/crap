@@ -1,6 +1,10 @@
 #ifndef RAP_HPP
 #define RAP_HPP
 
+#ifdef CRAP_H
+#error ("crap.h must be included after rap.hpp")
+#endif
+
 #include <cstdint>
 #include <string>
 

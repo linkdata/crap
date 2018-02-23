@@ -6,6 +6,8 @@
 #include "rap_conn.hpp"
 #include "rap_exchange.hpp"
 #include "rap_frame.h"
+
+/* crap.h must be included after rap.hpp */
 #include "crap.h"
 
 extern "C" rap_conn* rap_conn_create(rap_write_cb_t write_cb,
