@@ -17,7 +17,7 @@ extern "C" rap_conn* rap_conn_create(rap_write_cb_t write_cb,
 
 extern "C" int rap_conn_recv(rap_conn* conn, const char* buf,
                              int bytes_transferred) {
-  return conn->read_stream(buf, bytes_transferred);
+  return conn->recv(buf, bytes_transferred);
 }
 
 extern "C" rap_exchange* rap_conn_get_exchange(rap_conn* conn, int id) {

@@ -341,7 +341,7 @@ class server {
         socket_.get_option(send_buffer_size_option);
         /*
                 fprintf(stderr,
-                        "connection established (no_delay %d, recv %d, send
+                        "connection established (no_delay %d, read_stream %d, send
            %d)\n", no_delay_option.value(), receive_buffer_size_option.value(),
                         send_buffer_size_option.value());
         */

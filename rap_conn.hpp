@@ -37,7 +37,7 @@ class conn {
 
   // consume up to 'len' bytes of data from 'p',
   // returns the number of bytes consumed, or less if there is an error.
-  int read_stream(const char* src_buf, int src_len) {
+  int recv(const char* src_buf, int src_len) {
     if (!src_buf || src_len < 0) return 0;
 
     const char* src_ptr = src_buf;
