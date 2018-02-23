@@ -38,9 +38,10 @@ add_executable(crapper
   crap.cpp
   crap.h
 
+  rap_constants.h
+  rap_callbacks.h
   rap_header.h
   rap_frame.h
-  rap_callbacks.h
 
   rap.hpp
   rap_conn.hpp
