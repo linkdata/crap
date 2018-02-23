@@ -16,6 +16,7 @@
 #include "rap_reader.hpp"
 #include "rap_request.hpp"
 #include "rap_response.hpp"
+#include "rap_stats.hpp"
 
 #include "crap.h"
 

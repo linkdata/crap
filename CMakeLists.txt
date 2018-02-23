@@ -40,9 +40,9 @@ add_executable(crapper
 
   rap_header.h
   rap_frame.h
+  rap_callbacks.h
 
   rap.hpp
-  rap_connbase.hpp
   rap_conn.hpp
   rap_exchange.hpp
   rap_kvv.hpp

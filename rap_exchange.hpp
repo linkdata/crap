@@ -4,29 +4,35 @@
 #include <cstdint>
 
 #include "rap.hpp"
-#include "rap_connbase.hpp"
+#include "rap_callbacks.h"
 #include "rap_frame.h"
+
+enum { rap_max_exchange_id = rap_conn_exchange_id - 1 };
 
 namespace rap {
 
 class exchange {
  public:
   explicit exchange()
-      : conn_(NULL),
+      : write_cb_(0),
+        write_cb_param_(0),
+        exchange_cb_(0),
+        exchange_cb_param_(0),
         queue_(NULL),
         id_(rap_conn_exchange_id),
-        send_window_(0),
-        exchange_cb_(0),
-        exchange_cb_param_(0) {}
+        send_window_(0) {}
 
-  int init(const rap::connbase* conn, uint16_t id,
-           connbase::exchange_cb_t exchange_cb, void* exchange_cb_param) {
-    if (!conn || id > rap_max_exchange_id) return -1;
-    conn_ = conn;
-    id_ = id;
-    send_window_ = conn->send_window();
+  int init(uint16_t id, int send_window, rap_write_cb_t write_cb,
+           void* write_cb_param, rap_exchange_cb_t exchange_cb,
+           void* exchange_cb_param) {
+    if (!write_cb || id > rap_max_exchange_id) return -1;
+    write_cb_ = write_cb;
+    write_cb_param_ = write_cb_param;
     exchange_cb_ = exchange_cb;
     exchange_cb_param_ = exchange_cb_param;
+    queue_ = NULL;
+    id_ = id;
+    send_window_ = send_window;
 
     ack_[0] = '\0';
     ack_[1] = '\0';
@@ -41,13 +47,13 @@ class exchange {
     id_ = rap_conn_exchange_id;
   }
 
-  int set_callback(connbase::exchange_cb_t exchange_cb, void* exchange_cb_param) {
+  int set_callback(rap_exchange_cb_t exchange_cb, void* exchange_cb_param) {
     exchange_cb_ = exchange_cb;
     exchange_cb_param_ = exchange_cb_param;
     return 0;
   }
 
-  int get_callback(connbase::exchange_cb_t* p_exchange_cb,
+  int get_callback(rap_exchange_cb_t* p_exchange_cb,
                    void** p_exchange_cb_param) const {
     *p_exchange_cb = exchange_cb_;
     *p_exchange_cb_param = exchange_cb_param_;
@@ -81,13 +87,16 @@ class exchange {
     return had_head;
   }
 
-  const rap::connbase* conn() const { return conn_; }
   uint16_t id() const { return id_; }
   int16_t send_window() const { return send_window_; }
+  int write(const char* p, int n) const {
+    return write_cb_(write_cb_param_, p, n);
+  }
 
  private:
-  const rap::connbase* conn_;
-  connbase::exchange_cb_t exchange_cb_;
+  rap_write_cb_t write_cb_;
+  void* write_cb_param_;
+  rap_exchange_cb_t exchange_cb_;
   void* exchange_cb_param_;
   framelink* queue_;
   uint16_t id_;
@@ -105,15 +114,18 @@ class exchange {
   }
 
   error send_frame(const rap_frame* f) {
-    if (error e = conn_->write(f->data(), static_cast<int>(f->size()))) {
+    if (write(f->data(), static_cast<int>(f->size()))) {
       assert(!"rap::exchange::send_frame(): conn_.write() failed");
-      return e;
+      return rap_err_output_buffer_too_small;
     }
     if (!f->header().is_final()) --send_window_;
     return rap_err_ok;
   }
 
-  error send_ack() { return conn_->write(ack_, sizeof(ack_)); }
+  error send_ack() {
+    return write(ack_, sizeof(ack_)) ? rap_err_output_buffer_too_small
+                                     : rap_err_ok;
+  }
 };
 
 }  // namespace rap

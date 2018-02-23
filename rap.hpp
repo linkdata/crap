@@ -54,4 +54,10 @@ class conn;
 
 }  // namespace rap
 
+#define RAP_CONN_DEFINED 1
+typedef rap::conn rap_conn;
+
+#define RAP_EXCHANGE_DEFINED 1
+typedef rap::exchange rap_exchange;
+
 #endif  // RAP_HPP

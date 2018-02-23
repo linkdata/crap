@@ -2,15 +2,10 @@
 #include <cassert>
 #include <cstdlib>
 
+#include "rap.hpp"
 #include "rap_conn.hpp"
+#include "rap_exchange.hpp"
 #include "rap_frame.h"
-
-#define RAP_CONN_DEFINED 1
-typedef rap::conn rap_conn;
-
-#define RAP_EXCHANGE_DEFINED 1
-typedef rap::exchange rap_exchange;
-
 #include "crap.h"
 
 extern "C" rap_conn* rap_conn_create(rap_conn_write_cb_t write_cb,

@@ -7,24 +7,28 @@
 #include <vector>
 
 #include "rap.hpp"
-#include "rap_connbase.hpp"
+#include "rap_callbacks.h"
 #include "rap_exchange.hpp"
 #include "rap_frame.h"
 #include "rap_text.hpp"
 
 namespace rap {
 
-class conn : connbase {
+enum { rap_max_exchange_id = rap_conn_exchange_id - 1 };
+
+class conn {
  public:
-  explicit conn(write_cb_t write_cb, void* write_cb_param)
-      : connbase(write_cb, write_cb_param),
+  static const int16_t max_send_window = 8;
+
+  explicit conn(rap_write_cb_t write_cb, void* write_cb_param)
+      : write_cb_(write_cb),
+        write_cb_param_(write_cb_param),
         frame_ptr_(frame_buf_),
         exchanges_(rap_max_exchange_id + 1) {
     // assert correctly initialized exchange vector
     assert(exchanges_.size() == rap_max_exchange_id + 1);
     for (uint16_t id = 0; id < exchanges_.size(); ++id) {
-      exchanges_[id].init(this, id, 0, 0);
-      assert(exchanges_[id].conn() == this);
+      exchanges_[id].init(id, send_window(), write_cb_, write_cb_param_, 0, 0);
       assert(exchanges_[id].id() == id);
       assert(exchanges_[id].send_window() == send_window());
     }
@@ -72,7 +76,7 @@ class conn : connbase {
       } else if (id < exchanges_.size()) {
         error ec = rap_err_ok;
         exchanges_[id].process_frame(
-                f, static_cast<int>(frame_ptr_ - frame_buf_), ec);
+            f, static_cast<int>(frame_ptr_ - frame_buf_), ec);
       } else {
       // exchange id out of range
 #ifndef NDEBUG
@@ -99,7 +103,18 @@ class conn : connbase {
   const rap::exchange& exchange(uint16_t id) const { return exchanges_[id]; }
   rap::exchange& exchange(uint16_t id) { return exchanges_[id]; }
 
+  rap::error write(const char* src_ptr, int src_len) const {
+    if (!src_ptr || src_len < 0 || !write_cb_) return rap_err_invalid_parameter;
+    return write_cb_(write_cb_param_, src_ptr, src_len) < 0
+               ? rap_err_payload_too_big
+               : rap_err_ok;
+  }
+
+  int16_t send_window() const { return max_send_window; }
+
  private:
+  rap_write_cb_t write_cb_;
+  void* write_cb_param_;
   char frame_buf_[rap_frame_max_size];
   char* frame_ptr_;
   std::vector<rap::exchange> exchanges_;
