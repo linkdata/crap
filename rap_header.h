@@ -4,9 +4,9 @@
 #include <assert.h>
 #include <stdint.h>
 
+#include "rap_constants.h"
+
 enum {
-  rap_conn_exchange_id = 0x1fff,
-  rap_frame_header_size = 4 /**< Number of octets in a rap frame header. */
 };
 
 struct rap_header {

@@ -4,10 +4,9 @@
 #include <cstdint>
 
 #include "rap.hpp"
+#include "rap_constants.h"
 #include "rap_callbacks.h"
 #include "rap_frame.h"
-
-enum { rap_max_exchange_id = rap_conn_exchange_id - 1 };
 
 namespace rap {
 
