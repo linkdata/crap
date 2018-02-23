@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#include "rap_callbacks.h"
 #include "rap_frame.h"
 
 #ifdef __cplusplus
@@ -42,29 +43,6 @@ enum {
 };
 
 /*
-    The write network data callback.
-    Always called with complete frames in the buffer.
-    The buffer contents must be copied or sent before the call returns.
-    A nonzero return value indicates the network socket has been
-    closed and connection should terminate.
-*/
-typedef int (*rap_conn_write_cb_t)(void* write_cb_param, const char* p, int n);
-
-/*
-    int rap_exchange_cb(
-        void* exchange_cb_param,
-        rap_exchange* exch,
-        const rap_frame* f,
-        int n)
-
-    The frame callback is invoked when a new frame is received for
-    an exchange.
-    A nonzero return value indicates the connection should terminate.
-*/
-typedef int (*rap_exchange_cb_t)(void* exchange_cb_param, rap_exchange* exch,
-                                 const rap_frame* f, int n);
-
-/*
  * Network-side connection-level API
  *
  * For each listening port (usually on 10111), create a RAP
@@ -76,7 +54,7 @@ typedef int (*rap_exchange_cb_t)(void* exchange_cb_param, rap_exchange* exch,
  * to free up the RAP connection resources.
  */
 
-rap_conn* rap_conn_create(rap_conn_write_cb_t write_cb, void* write_cb_param);
+rap_conn* rap_conn_create(rap_write_cb_t write_cb, void* write_cb_param);
 int rap_conn_recv(rap_conn* conn, const char* buf, int len);
 rap_exchange* rap_conn_get_exchange(rap_conn*, int exchange_id);
 void rap_conn_destroy(rap_conn* conn);

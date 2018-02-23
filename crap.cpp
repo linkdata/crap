@@ -8,7 +8,7 @@
 #include "rap_frame.h"
 #include "crap.h"
 
-extern "C" rap_conn* rap_conn_create(rap_conn_write_cb_t write_cb,
+extern "C" rap_conn* rap_conn_create(rap_write_cb_t write_cb,
                                      void* write_cb_param) {
   return new rap::conn(write_cb, write_cb_param);
 }
