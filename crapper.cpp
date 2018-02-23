@@ -284,7 +284,7 @@ class session : public std::enable_shared_from_this<session> {
         });
   }
 
-  enum { max_length = 65536 };
+  enum { max_length = 4096 };
   tcp::socket socket_;
   char data_[max_length];
   std::vector<char> buf_towrite_;
