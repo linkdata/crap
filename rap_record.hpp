@@ -5,7 +5,6 @@
 #include "rap_frame.h"
 #include "rap_text.hpp"
 
-
 #include <cassert>
 #include <streambuf>
 

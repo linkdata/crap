@@ -7,7 +7,6 @@
 #include "rap_frame.h"
 #include "rap_types.h"
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
