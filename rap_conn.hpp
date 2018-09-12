@@ -7,6 +7,7 @@
 
 #include "rap.hpp"
 #include "rap_callbacks.h"
+#include "rap_constants.h"
 #include "rap_frame.h"
 #include "rap_text.hpp"
 
@@ -27,7 +28,7 @@ public:
         assert(exchanges_.size() == rap_max_exchange_id + 1);
         for (rap_exch_id id = 0; id < exchanges_.size(); ++id) {
             exchanges_[id].init(
-                static_cast<rap_conn*>(this), id, max_send_window, 0, 0);
+                static_cast<rap_conn*>(this), id, rap_max_send_window, 0, 0);
             assert(exchanges_[id].id() == id);
             if (conn_exch_init_cb != 0)
                 conn_exch_init_cb(this->conn_user_data(), id, &exchanges_[id]);
@@ -36,6 +37,12 @@ public:
 
     virtual ~conn() {}
 
+    /**
+     * @brief Get the exchange object identified by it's ID
+     * 
+     * @param id the id number of the exchange
+     * @return rap::exchange* the exchange, or NULL if it was not found
+     */
     rap::exchange* get_exchange(rap_exch_id id)
     {
         if (id < 0 || id >= exchanges_.size())

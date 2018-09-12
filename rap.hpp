@@ -54,6 +54,7 @@ typedef std::string string_t;
 class text;
 class kvv;
 class exchange;
+class net;
 class conn;
 
 } // namespace rap

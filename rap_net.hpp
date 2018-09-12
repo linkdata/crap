@@ -13,8 +13,6 @@ namespace rap {
 
 class net {
 public:
-    static const int16_t max_send_window = 8;
-
     explicit net(void* conn_user_data, rap_conn_write_cb_t conn_write_cb)
         : conn_user_data_(conn_user_data)
         , conn_write_cb_(conn_write_cb)
@@ -87,14 +85,6 @@ public:
         assert(src_ptr == src_end);
         return (int)(src_ptr - src_buf);
     }
-
-    /**
-     * @brief Get the exchange object identified by it's ID
-     * 
-     * @param id the id number of the exchange
-     * @return rap::exchange* the exchange, or NULL if it was not found
-     */
-    virtual rap::exchange* get_exchange(rap_exch_id id) = 0;
 
 protected:
     void* conn_user_data() const { return conn_user_data_; }

@@ -8,14 +8,14 @@
 #include "rap_constants.h"
 #include "rap_frame.h"
 
-#include "rap_conn.hpp"
+#include "rap_net.hpp"
 
 namespace rap {
 
 class exchange {
 public:
     explicit exchange()
-        : conn_(0)
+        : net_(0)
         , exchange_cb_(0)
         , exchange_cb_param_(0)
         , queue_(NULL)
@@ -24,12 +24,12 @@ public:
     {
     }
 
-    int init(rap_conn* conn, rap_exch_id id, int send_window,
+    int init(rap::net* net, rap_exch_id id, int send_window,
         rap_exchange_cb_t exchange_cb, void* exchange_cb_param)
     {
-        if (!conn || id > rap_max_exchange_id)
+        if (!net || id > rap_max_exchange_id)
             return -1;
-        conn_ = conn;
+        net_ = net;
         exchange_cb_ = exchange_cb;
         exchange_cb_param_ = exchange_cb_param;
         queue_ = NULL;
@@ -100,10 +100,10 @@ public:
 
     rap_exch_id id() const { return id_; }
     int16_t send_window() const { return send_window_; }
-    int write(const char* p, int n) const { return conn_->write(p, n); }
+    int write(const char* p, int n) const { return net_->write(p, n); }
 
 private:
-    rap_conn* conn_;
+    rap::net* net_;
     rap_exchange_cb_t exchange_cb_;
     void* exchange_cb_param_;
     framelink* queue_;
