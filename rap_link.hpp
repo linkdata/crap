@@ -1,5 +1,5 @@
-#ifndef RAP_NET_HPP
-#define RAP_NET_HPP
+#ifndef RAP_LINK_HPP
+#define RAP_LINK_HPP
 
 #include <cassert>
 #include <cstdint>
@@ -11,16 +11,21 @@
 
 namespace rap {
 
-class net {
+/**
+ * @brief link maintains the per-network-link state and functionality to
+ *        serve both the #conn and #exchange classes.
+ * 
+ */
+class link {
 public:
-    explicit net(void* conn_user_data, rap_conn_write_cb_t conn_write_cb)
+    explicit link(void* conn_user_data, rap_conn_write_cb_t conn_write_cb)
         : conn_user_data_(conn_user_data)
         , conn_write_cb_(conn_write_cb)
         , frame_ptr_(frame_buf_)
     {
     }
 
-    virtual ~net() {}
+    virtual ~link() {}
 
     /**
      * @brief write() calls the #conn_write_cb callback function, 
@@ -100,4 +105,4 @@ private:
 
 } // namespace rap
 
-#endif // RAP_NET_HPP
+#endif // RAP_LINK_HPP

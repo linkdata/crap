@@ -12,16 +12,16 @@
 #include "rap_text.hpp"
 
 #include "rap_exchange.hpp"
-#include "rap_net.hpp"
+#include "rap_link.hpp"
 
 namespace rap {
 
-class conn : public net {
+class conn : public link {
 public:
     explicit conn(void* conn_user_data,
         rap_conn_write_cb_t conn_write_cb,
         rap_conn_exch_init_cb_t conn_exch_init_cb)
-        : net(conn_user_data, conn_write_cb)
+        : link(conn_user_data, conn_write_cb)
         , exchanges_(rap_max_exchange_id + 1)
     {
         // assert correctly initialized exchange vector
