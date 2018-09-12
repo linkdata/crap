@@ -27,15 +27,16 @@ public:
     virtual ~conn() {}
 
     /**
-     * @brief write() calls the @a conn_write_cb, writing @a n bytes at @a p to the network.
+     * @brief write() calls the #conn_write_cb callback function, 
+     * writing @a src_len bytes from @a src_buf to the network.
      * 
-     * @param p the bytes to write, must not be NULL
-     * @param n the number of bytes to write
+     * @param src_buf the bytes to write, must not be NULL
+     * @param src_len the number of bytes to write
      * @return int return value from #conn_write_cb
      */
-    int write(const char* p, int n) const
+    int write(const char* src_buf, int src_len) const
     {
-        return conn_write_cb_(conn_user_data_, p, n);
+        return conn_write_cb_(conn_user_data_, src_buf, src_len);
     }
 
     /**
