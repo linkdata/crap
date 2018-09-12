@@ -10,28 +10,24 @@
 /* crap.h must be included after rap.hpp */
 #include "crap.h"
 
-extern "C" rap_conn*
-rap_conn_create(void* conn_user_data,
+extern "C" rap_conn* rap_conn_create(void* conn_user_data,
     rap_conn_write_cb_t conn_write_cb,
     rap_conn_exch_init_cb_t conn_exch_init_cb)
 {
     return new rap::conn(conn_user_data, conn_write_cb, conn_exch_init_cb);
 }
 
-extern "C" int
-rap_conn_recv(rap_conn* conn, const char* buf, int bytes_transferred)
+extern "C" int rap_conn_recv(rap_conn* conn, const char* buf, int bytes_transferred)
 {
     return conn->recv(buf, bytes_transferred);
 }
 
-extern "C" rap_exchange*
-rap_conn_get_exchange(rap_conn* conn, int id)
+extern "C" rap_exchange* rap_conn_get_exchange(rap_conn* conn, int id)
 {
     return conn->get_exchange(id);
 }
 
-extern "C" void
-rap_conn_destroy(rap_conn* conn)
+extern "C" void rap_conn_destroy(rap_conn* conn)
 {
     if (conn)
         delete conn;
@@ -41,22 +37,19 @@ rap_conn_destroy(rap_conn* conn)
  * Exchange level API
  */
 
-extern "C" rap_exch_id
-rap_exch_get_id(const rap_exchange* exch)
+extern "C" rap_exch_id rap_exch_get_id(const rap_exchange* exch)
 {
     return exch->id();
 }
 
-extern "C" int
-rap_exch_set_callback(rap_exchange* exch,
+extern "C" int rap_exch_set_callback(rap_exchange* exch,
     rap_exchange_cb_t exchange_cb,
     void* exchange_cb_param)
 {
     return exch->set_callback(exchange_cb, exchange_cb_param);
 }
 
-extern "C" int
-rap_exch_get_callback(const rap_exchange* exch,
+extern "C" int rap_exch_get_callback(const rap_exchange* exch,
     rap_exchange_cb_t* p_exchange_cb,
     void** p_exchange_cb_param)
 {
