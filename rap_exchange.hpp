@@ -8,10 +8,7 @@
 #include "rap_constants.h"
 #include "rap_frame.h"
 
-
-class rap::conn;
-
-// #include "rap_conn.hpp"
+#include "rap_conn.hpp"
 
 namespace rap {
 
