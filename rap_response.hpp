@@ -13,20 +13,19 @@
 namespace rap {
 
 class response : public record {
- public:
-  response(reader& r)
-      : record(r.frame()),
-        code_(static_cast<uint16_t>(r.read_length())),
-        headers_(r),
-        content_length_(-1) {}
+public:
+  response(reader &r)
+      : record(r.frame()), code_(static_cast<uint16_t>(r.read_length())),
+        headers_(r), content_length_(-1) {}
 
   response(uint16_t code = 200, int64_t content_length = -1)
       : record(NULL), code_(code), content_length_(content_length) {}
 
-  void render(string_t& out) const {
+  void render(string_t &out) const {
     char buf[64];
     int n = sprintf(buf, "%03d", code());
-    if (n > 0) out.append(buf, n);
+    if (n > 0)
+      out.append(buf, n);
     out += ' ';
     status().render(out);
     out += '\n';
@@ -44,36 +43,38 @@ class response : public record {
 
   uint16_t code() const { return code_; }
   void set_code(uint16_t code) { code_ = code; }
-  const rap::headers& headers() const { return headers_; }
+  const rap::headers &headers() const { return headers_; }
   text status() const {
     size_t i = headers_.find("Status");
-    if (i == 0) return text();
+    if (i == 0)
+      return text();
     return headers_.at(i);
   }
   void set_status(text txt) {
     size_t i = headers_.find("Status");
-    if (i != 0) headers_.at(i) = txt;
+    if (i != 0)
+      headers_.at(i) = txt;
   }
   int64_t content_length() const { return content_length_; }
   void set_content_length(int64_t n) { content_length_ = n; }
 
-  const rap::writer& operator>>(const rap::writer& w) const {
+  const rap::writer &operator>>(const rap::writer &w) const {
     w << static_cast<char>(rap::record::tag_http_response) << code()
       << headers() << content_length();
     return w;
   }
 
- private:
+private:
   uint16_t code_;
   rap::headers headers_;
   int64_t content_length_;
 };
 
-inline const rap::writer& operator<<(const rap::writer& w,
-                                     const rap::response& res) {
+inline const rap::writer &operator<<(const rap::writer &w,
+                                     const rap::response &res) {
   return res >> w;
 }
 
-}  // namespace rap
+} // namespace rap
 
-#endif  // RAP_RESPONSE_HPP
+#endif // RAP_RESPONSE_HPP

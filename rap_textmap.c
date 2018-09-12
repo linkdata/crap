@@ -48,17 +48,18 @@ inline
 #endif
 #endif
     static unsigned int
-    hash(register const char* str, register unsigned int len) {
+    hash(register const char *str, register unsigned int len)
+{
   static const unsigned char asso_values[] = {
       110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110,
       110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110,
       110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110,
-      110, 110, 110, 110, 110, 110, 110, 110, 60,  110, 110, 110, 110, 110, 110,
-      110, 110, 110, 110, 110, 0,   110, 5,   65,  20,  0,   0,   40,  15,  110,
-      110, 10,  30,  110, 35,  40,  110, 35,  15,  0,   75,  50,  50,  20,  110,
-      110, 110, 110, 110, 110, 110, 110, 5,   110, 0,   25,  5,   110, 45,  10,
-      110, 110, 20,  60,  0,   0,   10,  40,  110, 35,  40,  5,   5,   110, 0,
-      110, 40,  110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110,
+      110, 110, 110, 110, 110, 110, 110, 110, 60, 110, 110, 110, 110, 110, 110,
+      110, 110, 110, 110, 110, 0, 110, 5, 65, 20, 0, 0, 40, 15, 110,
+      110, 10, 30, 110, 35, 40, 110, 35, 15, 0, 75, 50, 50, 20, 110,
+      110, 110, 110, 110, 110, 110, 110, 5, 110, 0, 25, 5, 110, 45, 10,
+      110, 110, 20, 60, 0, 0, 10, 40, 110, 35, 40, 5, 5, 110, 0,
+      110, 40, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110,
       110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110,
       110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110,
       110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110, 110,
@@ -73,14 +74,14 @@ inline
 }
 
 static const unsigned char rap_textmap_lengths[] = {
-    0,  0,  0,  3,  4,  5,  0,  2,  3,  0,  5,  6,  7,  13, 9,  10, 6,  7,  8,
-    14, 15, 16, 12, 13, 19, 5,  16, 27, 8,  14, 10, 6,  12, 8,  4,  10, 16, 17,
-    13, 19, 15, 6,  7,  3,  4,  5,  16, 17, 13, 4,  10, 6,  7,  13, 4,  5,  6,
-    7,  3,  19, 15, 6,  17, 18, 0,  0,  16, 7,  23, 4,  15, 16, 12, 3,  4,  0,
-    11, 7,  13, 0,  25, 11, 12, 0,  0,  5,  0,  7,  0,  4,  10, 6,  0,  0,  4,
-    15, 0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  4};
+    0, 0, 0, 3, 4, 5, 0, 2, 3, 0, 5, 6, 7, 13, 9, 10, 6, 7, 8,
+    14, 15, 16, 12, 13, 19, 5, 16, 27, 8, 14, 10, 6, 12, 8, 4, 10, 16, 17,
+    13, 19, 15, 6, 7, 3, 4, 5, 16, 17, 13, 4, 10, 6, 7, 13, 4, 5, 6,
+    7, 3, 19, 15, 6, 17, 18, 0, 0, 16, 7, 23, 4, 15, 16, 12, 3, 4, 0,
+    11, 7, 13, 0, 25, 11, 12, 0, 0, 5, 0, 7, 0, 4, 10, 6, 0, 0, 4,
+    15, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4};
 
-static const char* const rap_textmap_words[] = {"",
+static const char *const rap_textmap_words[] = {"",
                                                 "",
                                                 "",
                                                 "GET",
@@ -191,26 +192,35 @@ static const char* const rap_textmap_words[] = {"",
                                                 "",
                                                 "HEAD"};
 
-const char* rap_textmap_in_word_set(register const char* str,
-                                    register unsigned int len) {
-  if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH) {
+const char *rap_textmap_in_word_set(register const char *str,
+                                    register unsigned int len)
+{
+  if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)
+  {
     unsigned int key = hash(str, len);
 
     if (key <= MAX_HASH_VALUE)
-      if (len == rap_textmap_lengths[key]) {
-        register const char* s = rap_textmap_words[key];
+      if (len == rap_textmap_lengths[key])
+      {
+        register const char *s = rap_textmap_words[key];
 
-        if (*str == *s && !memcmp(str + 1, s + 1, len - 1)) return s;
+        if (*str == *s && !memcmp(str + 1, s + 1, len - 1))
+          return s;
       }
   }
   return 0;
 }
 #line 93 "rap_textmap.gperf"
 
-unsigned int rap_textmap_max_key() { return MAX_HASH_VALUE + 2; }
+unsigned int rap_textmap_max_key()
+{
+  return MAX_HASH_VALUE + 2;
+}
 
-const char* rap_textmap_from_key(unsigned int key, size_t* p_len) {
-  if (key < 2 || key > MAX_HASH_VALUE + 2) {
+const char *rap_textmap_from_key(unsigned int key, size_t *p_len)
+{
+  if (key < 2 || key > MAX_HASH_VALUE + 2)
+  {
     *p_len = 0;
     return key == 1 ? "" : 0;
   }
@@ -218,15 +228,21 @@ const char* rap_textmap_from_key(unsigned int key, size_t* p_len) {
   return rap_textmap_words[key - 2];
 }
 
-unsigned int rap_textmap_to_key(const char* str, size_t len) {
-  if (!len) return 1;
-  if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH) {
+unsigned int rap_textmap_to_key(const char *str, size_t len)
+{
+  if (!len)
+    return 1;
+  if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)
+  {
     unsigned int key = hash(str, (unsigned int)len);
     if (key <= MAX_HASH_VALUE)
-      if (len == rap_textmap_lengths[key]) {
-        register const char* s = rap_textmap_words[key];
-        while (len--) {
-          if (*str++ != *s++) return 0;
+      if (len == rap_textmap_lengths[key])
+      {
+        register const char *s = rap_textmap_words[key];
+        while (len--)
+        {
+          if (*str++ != *s++)
+            return 0;
         }
         return 2 + key;
       }

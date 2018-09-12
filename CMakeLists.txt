@@ -23,6 +23,7 @@ if(WIN32)
 endif()
 
 set(Boost_USE_STATIC_LIBS ON)
+set(Boost_ADDITIONAL_VERSIONS 1.68)
 find_package(Boost REQUIRED COMPONENTS system)
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
@@ -45,7 +46,9 @@ add_executable(crapper
 
   rap.hpp
   rap_conn.hpp
+  rap_conn.cpp
   rap_exchange.hpp
+  rap_exchange.cpp
   rap_kvv.hpp
   rap_reader.hpp
   rap_record.hpp

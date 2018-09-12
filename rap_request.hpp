@@ -10,18 +10,21 @@
 #include <cassert>
 #include <cstring>
 
-namespace rap {
+namespace rap
+{
 
-class request : public record {
- public:
-  request(reader& r)
+class request : public record
+{
+public:
+  request(reader &r)
       : record(r.frame()),
         method_(r.read_text()),
         path_(r.read_text()),
         query_(r),
         headers_(r),
         host_(r.read_text()),
-        content_length_(r.read_int64()) {
+        content_length_(r.read_int64())
+  {
     assert(!method_.empty());
     assert(!path_.empty());
     assert(content_length_ >= -1);
@@ -30,13 +33,15 @@ class request : public record {
 
   text method() const { return method_; }
   text path() const { return path_; }
-  const rap::query& query() const { return query_; }
-  const rap::headers& headers() const { return headers_; }
+  const rap::query &query() const { return query_; }
+  const rap::headers &headers() const { return headers_; }
   text host() const { return host_; }
   int64_t content_length() const { return content_length_; }
 
-  void render(string_t& out) const {
-    if (method().is_null()) return;
+  void render(string_t &out) const
+  {
+    if (method().is_null())
+      return;
     assert(!path().is_null());
     assert(content_length() >= -1);
     method().render(out);
@@ -45,15 +50,18 @@ class request : public record {
     query().render(out);
     out += '\n';
     headers().render(out);
-    if (!host().empty()) {
+    if (!host().empty())
+    {
       out += "Host: ";
       host().render(out);
       out += '\n';
     }
-    if (content_length() >= 0) {
+    if (content_length() >= 0)
+    {
       char buf[64];
       int n = sprintf(buf, "%lld", content_length());
-      if (n > 0) {
+      if (n > 0)
+      {
         out += "Content-Length: ";
         out.append(buf, n);
         out += '\n';
@@ -61,7 +69,7 @@ class request : public record {
     }
   }
 
- private:
+private:
   text method_;
   text path_;
   rap::query query_;
@@ -70,6 +78,6 @@ class request : public record {
   int64_t content_length_;
 };
 
-}  // namespace rap
+} // namespace rap
 
-#endif  // RAP_REQUEST_HPP
+#endif // RAP_REQUEST_HPP

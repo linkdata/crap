@@ -2,7 +2,7 @@
 #define RAP_HPP
 
 #ifdef CRAP_H
-#error ("crap.h must be included after rap.hpp")
+#error("crap.h must be included after rap.hpp")
 #endif
 
 #include <cstdint>
@@ -10,9 +10,11 @@
 
 #include "rap_header.h"
 
-namespace rap {
+namespace rap
+{
 
-typedef enum {
+typedef enum
+{
   rap_err_ok = 0,
   rap_err_null_string = 1,
   rap_err_invalid_parameter = 2,
@@ -29,7 +31,8 @@ typedef enum {
   rap_err_incomplete_body = 14
 } error;
 
-typedef enum {
+typedef enum
+{
   rap_frame_type_setup = 0x01,
   rap_frame_type_request = 0x02,
   rap_frame_type_response = 0x03,
@@ -37,14 +40,16 @@ typedef enum {
   rap_frame_type_body = 0xff,
 } rap_frame_type;
 
-typedef enum {
+typedef enum
+{
   rap_frame_flag_final = 0x80,
   rap_frame_flag_head = 0x40,
   rap_frame_flag_body = 0x20,
 } rap_frame_flag;
 
 typedef char record_type;
-enum {
+enum
+{
   RecordTypeHTTPRequest = record_type(0x01),
   RecordTypeHTTPResponse = record_type(0x02),
 };
@@ -56,7 +61,7 @@ class kvv;
 class exchange;
 class conn;
 
-}  // namespace rap
+} // namespace rap
 
 #define RAP_CONN_DEFINED 1
 typedef rap::conn rap_conn;
@@ -64,4 +69,4 @@ typedef rap::conn rap_conn;
 #define RAP_EXCHANGE_DEFINED 1
 typedef rap::exchange rap_exchange;
 
-#endif  // RAP_HPP
+#endif // RAP_HPP
