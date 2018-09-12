@@ -48,9 +48,8 @@ add_executable(crapper
 
   rap.hpp
   rap_conn.hpp
-  rap_conn.cpp
+  rap_conn_impl.hpp
   rap_exchange.hpp
-  rap_exchange.cpp
   rap_kvv.hpp
   rap_reader.hpp
   rap_record.hpp

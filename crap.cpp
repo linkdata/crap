@@ -3,7 +3,7 @@
 #include <cstdlib>
 
 #include "rap.hpp"
-#include "rap_conn.hpp"
+#include "rap_conn_impl.hpp"
 #include "rap_exchange.hpp"
 #include "rap_frame.h"
 
@@ -14,7 +14,7 @@ extern "C" rap_conn* rap_conn_create(void* conn_user_data,
     rap_conn_write_cb_t conn_write_cb,
     rap_conn_exch_init_cb_t conn_exch_init_cb)
 {
-    return new rap::conn(conn_user_data, conn_write_cb, conn_exch_init_cb);
+    return new rap::conn_impl(conn_user_data, conn_write_cb, conn_exch_init_cb);
 }
 
 extern "C" int rap_conn_recv(rap_conn* conn, const char* buf, int bytes_transferred)
