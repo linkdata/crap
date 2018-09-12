@@ -31,7 +31,7 @@ public:
                 static_cast<rap_conn*>(this), id, max_send_window, 0, 0);
             assert(exchanges_[id].id() == id);
             if (conn_exch_init_cb != 0)
-                conn_exch_init_cb(conn_user_data, id, &exchanges_[id]);
+                conn_exch_init_cb(this->conn_user_data(), id, &exchanges_[id]);
         }
     }
 

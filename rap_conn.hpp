@@ -36,7 +36,7 @@ public:
      */
     int write(const char* src_buf, int src_len) const
     {
-        return conn_write_cb_(conn_user_data_, src_buf, src_len);
+        return conn_write_cb_(conn_user_data(), src_buf, src_len);
     }
 
     /**
@@ -99,6 +99,7 @@ public:
     virtual rap::exchange* get_exchange(rap_exch_id id) = 0;
 
 protected:
+    void* conn_user_data() const { return conn_user_data_; }
     virtual void process_conn(const rap_frame* f) = 0;
     virtual bool process_frame(rap_exch_id id, const rap_frame* f, int len, rap::error& ec) = 0;
 
