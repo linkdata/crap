@@ -1,5 +1,5 @@
-#ifndef RAP_CONN_IMPL_HPP
-#define RAP_CONN_IMPL_HPP
+#ifndef RAP_CONN_HPP
+#define RAP_CONN_HPP
 
 #include <cassert>
 #include <cstdint>
@@ -10,17 +10,17 @@
 #include "rap_frame.h"
 #include "rap_text.hpp"
 
-#include "rap_conn.hpp"
 #include "rap_exchange.hpp"
+#include "rap_net.hpp"
 
 namespace rap {
 
-class conn_impl : public conn {
+class conn : public net {
 public:
-    explicit conn_impl(void* conn_user_data,
+    explicit conn(void* conn_user_data,
         rap_conn_write_cb_t conn_write_cb,
         rap_conn_exch_init_cb_t conn_exch_init_cb)
-        : conn(conn_user_data, conn_write_cb)
+        : net(conn_user_data, conn_write_cb)
         , exchanges_(rap_max_exchange_id + 1)
     {
         // assert correctly initialized exchange vector
@@ -33,6 +33,8 @@ public:
                 conn_exch_init_cb(this->conn_user_data(), id, &exchanges_[id]);
         }
     }
+
+    virtual ~conn() {}
 
     rap::exchange* get_exchange(rap_exch_id id)
     {
@@ -64,4 +66,4 @@ private:
 
 } // namespace rap
 
-#endif // RAP_CONN_IMPL_HPP
+#endif // RAP_CONN_HPP

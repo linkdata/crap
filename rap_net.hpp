@@ -1,5 +1,5 @@
-#ifndef RAP_CONN_HPP
-#define RAP_CONN_HPP
+#ifndef RAP_NET_HPP
+#define RAP_NET_HPP
 
 #include <cassert>
 #include <cstdint>
@@ -11,18 +11,18 @@
 
 namespace rap {
 
-class conn {
+class net {
 public:
     static const int16_t max_send_window = 8;
 
-    explicit conn(void* conn_user_data, rap_conn_write_cb_t conn_write_cb)
+    explicit net(void* conn_user_data, rap_conn_write_cb_t conn_write_cb)
         : conn_user_data_(conn_user_data)
         , conn_write_cb_(conn_write_cb)
         , frame_ptr_(frame_buf_)
     {
     }
 
-    virtual ~conn() {}
+    virtual ~net() {}
 
     /**
      * @brief write() calls the #conn_write_cb callback function, 
@@ -110,4 +110,4 @@ private:
 
 } // namespace rap
 
-#endif // RAP_CONN_HPP
+#endif // RAP_NET_HPP
