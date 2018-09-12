@@ -7,7 +7,7 @@
 # Copyright (c)2015-2018 Johan Lindh <johan at linkdata dot se>.
 #
 
-cmake_minimum_required(VERSION 3.8.2)
+cmake_minimum_required(VERSION 3.10.3)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(CMAKE_CONFIGURATION_TYPES Debug Release)
@@ -30,6 +30,8 @@ link_directories(${Boost_LIBRARY_DIRS})
 if(Boost_FOUND)
     add_definitions(-DHAVE_BOOST)
 endif()
+
+add_subdirectory(test)
 
 # build the sample echo server 'crapper'
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
