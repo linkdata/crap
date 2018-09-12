@@ -12,9 +12,9 @@ extern "C" {
 #endif
 
 /*
-        crap.h
-        Compact REST Aggregation Protocol library
-    */
+    crap.h
+    Compact REST Aggregation Protocol library
+*/
 
 #ifndef RAP_CONN_DEFINED
 #define RAP_CONN_DEFINED 1
@@ -45,31 +45,31 @@ enum {
 };
 
 /*
-    * Network-side connection-level API
-    *
-    * For each connected RAP peer, create a `rap_conn`
-    * with callbacks for writing to the network and to
-    * initialize exchanges.
-    * 
-    * Then repeatedly call `rap_conn_recv()` to submit incoming
-    * network data. Once `rap_conn_recv()` returns a negative
-    * value, close the connection and call `rap_conn_destroy()`
-    * to free up the RAP connection resources.
-    * 
-    * The `conn_exch_init_cb` callback will be called when an
-    * exchange is set up for the first time. Use `rap_exch_set_callback()`
-    * to set it up to handle requests and responses. Once initialized,
-    * an exchange will never change it's ID, and won't be destroyed until
-    * it's associated connection is destroyed.
-    */
+* Network-side connection-level API
+*
+* For each connected RAP peer, create a `rap_conn`
+* with callbacks for writing to the network and to
+* initialize exchanges.
+* 
+* Then repeatedly call `rap_conn_recv()` to submit incoming
+* network data. Once `rap_conn_recv()` returns a negative
+* value, close the connection and call `rap_conn_destroy()`
+* to free up the RAP connection resources.
+* 
+* The `conn_exch_init_cb` callback will be called when an
+* exchange is set up for the first time. Use `rap_exch_set_callback()`
+* to set it up to handle requests and responses. Once initialized,
+* an exchange will never change it's ID, and won't be destroyed until
+* it's associated connection is destroyed.
+*/
 
 rap_conn* rap_conn_create(void* conn_user_data, rap_conn_write_cb_t conn_write_cb, rap_conn_exch_init_cb_t conn_exch_init_cb);
 int rap_conn_recv(rap_conn* conn, const char* buf, int len);
 void rap_conn_destroy(rap_conn* conn);
 
 /*
-    * Exchange level API
-    */
+* Exchange level API
+*/
 
 rap_exch_id rap_exch_get_id(const rap_exchange* exch);
 int rap_exch_set_callback(rap_exchange* exch, rap_exchange_cb_t exchange_cb,
@@ -80,8 +80,8 @@ int rap_exch_get_callback(const rap_exchange* exch,
 int rap_exch_write_frame(rap_exchange* exch, const rap_frame* f);
 
 /*
-    * Frame API
-    */
+* Frame API
+*/
 rap_frame* rap_frame_create(int payload_max_size);
 void rap_frame_destroy(rap_frame*);
 rap_exch_id rap_frame_id(const rap_frame*);
@@ -94,9 +94,9 @@ int rap_frame_copy(rap_frame* dst, const rap_frame* src);
 int rap_frame_error(const rap_frame*);
 
 /*
-    * These will return the number of characters written, or negative on error.
-    * They will advance the frame's current payload pointer on success.
-    */
+* These will return the number of characters written, or negative on error.
+* They will advance the frame's current payload pointer on success.
+*/
 int rap_frame_write_tag(rap_frame*, rap_tag);
 int rap_frame_write_uint64(rap_frame*, uint64_t);
 int rap_frame_write_int64(rap_frame*, int64_t);
@@ -104,8 +104,8 @@ int rap_frame_write_length(rap_frame*, int);
 int rap_frame_write_string(rap_frame*, const char*, int);
 
 /*
-    * Frame parsing API
-    */
+* Frame parsing API
+*/
 int rap_parse_tag(const char**, rap_tag* result);
 int rap_parse_uint64(const char**, uint64_t* result);
 int rap_parse_int64(const char**, int64_t* result);
