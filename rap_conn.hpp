@@ -3,7 +3,6 @@
 
 #include <cassert>
 #include <cstdint>
-#include <vector>
 
 #include "rap.hpp"
 #include "rap_callbacks.h"
@@ -111,4 +110,4 @@ private:
 
 } // namespace rap
 
-#endif // RAP_CONN_IMPL_HPP
+#endif // RAP_CONN_HPP

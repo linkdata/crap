@@ -1,7 +1,6 @@
 #ifndef RAP_CONN_IMPL_HPP
 #define RAP_CONN_IMPL_HPP
 
-#include <atomic>
 #include <cassert>
 #include <cstdint>
 #include <vector>
