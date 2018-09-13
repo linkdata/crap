@@ -17,20 +17,22 @@ public:
     request(reader& r)
         : record(r.frame())
         , method_(r.read_text())
-        , path_(r.read_text())
+        , scheme_(r.read_text())
+        , route_(r.read_route())
         , query_(r)
         , headers_(r)
         , host_(r.read_text())
         , content_length_(r.read_int64())
     {
         assert(!method_.empty());
-        assert(!path_.empty());
+        assert(!route_.empty());
         assert(content_length_ >= -1);
         assert(content_length_ < (int64_t(1) << 32));
     }
 
     text method() const { return method_; }
-    text path() const { return path_; }
+    text scheme() const { return scheme_; }
+    route route() const { return route_; }
     const rap::query& query() const { return query_; }
     const rap::headers& headers() const { return headers_; }
     text host() const { return host_; }
@@ -40,11 +42,11 @@ public:
     {
         if (method().is_null())
             return;
-        assert(!path().is_null());
+        assert(!route().is_null());
         assert(content_length() >= -1);
         method().render(out);
         out += ' ';
-        path().render(out);
+        route().render(out);
         query().render(out);
         out += '\n';
         headers().render(out);
@@ -66,7 +68,8 @@ public:
 
 private:
     text method_;
-    text path_;
+    text scheme_;
+    rap::route route_;
     rap::query query_;
     rap::headers headers_;
     text host_;

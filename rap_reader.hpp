@@ -4,6 +4,7 @@
 #include "rap.hpp"
 #include "rap_frame.h"
 #include "rap_record.hpp"
+#include "rap_route.hpp"
 #include "rap_text.hpp"
 
 #include <cassert>
@@ -108,6 +109,19 @@ public:
         string_t retv;
         read_string(retv);
         return retv;
+    }
+
+    route read_route()
+    {
+        if (!error_) {
+            if (size_t length = read_length()) {
+				// TODO: routes
+                return route();
+            } else if (!error_) {
+                return route(read_text());
+            }
+        }
+        return route();
     }
 
     void consume(size_t n)

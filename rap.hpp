@@ -52,6 +52,7 @@ enum {
 typedef std::string string_t;
 
 class text;
+class route;
 class kvv;
 class exchange;
 class net;
