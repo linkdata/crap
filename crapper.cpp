@@ -77,8 +77,9 @@ public:
         }
         if (hdr.has_body())
             process_body(r);
-        if (hdr.is_final())
-            process_final(r);
+        pubsync();
+        header().set_final();
+        pubsync();
         return 0;
     }
 
