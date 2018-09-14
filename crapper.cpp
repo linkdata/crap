@@ -5,6 +5,7 @@
  */
 
 #include <boost/asio.hpp>
+#include <boost/thread.hpp>
 #include <cstdlib>
 #include <iostream>
 #include <memory>
@@ -30,6 +31,8 @@ public:
         : exch_(0)
         , stats_(0)
         , id_(rap_conn_exchange_id)
+        , contentlength_(-1)
+        , contentread_(0)
     {
     }
 
@@ -78,8 +81,10 @@ public:
         if (hdr.has_body())
             process_body(r);
         pubsync();
-        header().set_final();
-        pubsync();
+        if (contentread_ >= contentlength_) {
+            header().set_final();
+            pubsync();
+        }
         return 0;
     }
 
@@ -92,10 +97,9 @@ public:
         req.render(req_echo_);
         req_echo_ += '\n';
         header().set_head();
-        int64_t content_length = req.content_length();
-        if (content_length >= 0)
-            content_length += req_echo_.size();
-        rap::writer(*this) << rap::response(200, content_length);
+        contentread_ = 0;
+        contentlength_ = req.content_length();
+        rap::writer(*this) << rap::response(200, req_echo_.size() + contentlength_);
         header().set_body();
         sputn(req_echo_.data(), req_echo_.size());
         return r.error();
@@ -106,6 +110,7 @@ public:
         assert(r.size() > 0);
         header().set_body();
         sputn(r.data(), r.size());
+        contentread_ += r.size();
         r.consume();
         return r.error();
     }
@@ -133,7 +138,7 @@ protected:
         bool was_body = header().has_body();
         bool was_final = header().is_final();
 
-        if (was_final && ch != traits_type::eof())
+        // if (was_final && ch != traits_type::eof())
             header().clr_final();
 
         if (sync() != 0) {
@@ -144,16 +149,16 @@ protected:
 
         if (was_body)
             header().set_body();
-        else if (was_head)
+        if (was_head)
             header().set_head();
-
-        if (was_final)
-            header().set_final();
 
         if (ch != traits_type::eof()) {
             *pptr() = ch;
             pbump(1);
-        }
+        } else {
+            if (was_final)
+                header().set_final();
+		}
 
         return ch;
     }
@@ -177,6 +182,8 @@ private:
     rap_exch_id id_;
     std::vector<char> buf_;
     rap::string_t req_echo_;
+    int64_t contentlength_;
+    int64_t contentread_;
 
     void start_write()
     {
@@ -340,10 +347,11 @@ private:
 
 class server {
 public:
-    server(boost::asio::io_service& io_service, short port)
-        : acceptor_(io_service, tcp::endpoint(tcp::v4(), port))
-        , socket_(io_service)
-        , timer_(io_service)
+    server(short port)
+        : acceptor_(io_service_, tcp::endpoint(tcp::v4(), port))
+        , socket_(io_service_)
+        , timer_(io_service_)
+        , thread_pool_size_(1)
         , last_head_count_(0)
         , last_read_iops_(0)
         , last_read_bytes_(0)
@@ -355,6 +363,25 @@ public:
     {
         do_timer();
         do_accept();
+    }
+
+    void run()
+    {
+        if (thread_pool_size_ > 1) {
+            // Create a pool of threads to run all of the io_services.
+            std::vector<boost::shared_ptr<boost::thread>> threads;
+            for (std::size_t i = 0; i < thread_pool_size_; ++i) {
+                boost::shared_ptr<boost::thread> thread(new boost::thread(
+                    boost::bind(&boost::asio::io_service::run, &io_service_)));
+                threads.push_back(thread);
+            }
+
+            // Wait for all threads in the pool to exit.
+            for (std::size_t i = 0; i < threads.size(); ++i)
+                threads[i]->join();
+        } else {
+            io_service_.run();
+		}
     }
 
 protected:
@@ -442,10 +469,12 @@ private:
         do_timer();
     }
 
+    boost::asio::io_service io_service_;
     boost::asio::deadline_timer timer_;
     tcp::acceptor acceptor_;
     tcp::socket socket_;
     rap::stats stats_;
+    size_t thread_pool_size_;
 };
 
 int main(int argc, char* argv[])
@@ -455,12 +484,8 @@ int main(int argc, char* argv[])
         if (argc == 2) {
             port = argv[1];
         }
-
-        boost::asio::io_service io_service;
-
-        server s(io_service, std::atoi(port));
-
-        io_service.run();
+        server s(std::atoi(port));
+        s.run();
     } catch (std::exception& e) {
         std::cerr << "Exception: " << e.what() << "\n";
     }
