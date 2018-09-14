@@ -24,7 +24,7 @@ endif()
 
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_ADDITIONAL_VERSIONS 1.68)
-find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system thread)
 include_directories(${Boost_INCLUDE_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 if(Boost_FOUND)

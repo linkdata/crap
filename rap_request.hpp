@@ -32,7 +32,7 @@ public:
 
     text method() const { return method_; }
     text scheme() const { return scheme_; }
-    route route() const { return route_; }
+    rap::route route() const { return route_; }
     const rap::query& query() const { return query_; }
     const rap::headers& headers() const { return headers_; }
     text host() const { return host_; }
