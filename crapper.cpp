@@ -425,12 +425,12 @@ private:
     void handle_timeout(const boost::system::error_code& e)
     {
         if (e != boost::asio::error::operation_aborted) {
-            uint64_t n;
-            uint64_t stat_rps_;
-            uint64_t stat_iops_in_;
-            uint64_t stat_mbps_in_;
-            uint64_t stat_iops_out_;
-            uint64_t stat_mbps_out_;
+            unsigned long long n;
+            unsigned long long stat_rps_;
+            unsigned long long stat_iops_in_;
+            unsigned long long stat_mbps_in_;
+            unsigned long long stat_iops_out_;
+            unsigned long long stat_mbps_out_;
 
             n = stats_.head_count;
             stat_rps_ = n - last_head_count_;
@@ -458,7 +458,7 @@ private:
                 last_stat_rps_ = stat_rps_;
                 fprintf(
                     stderr,
-                    "%lu Rps - IN: %lu Mbps, %lu iops - OUT: %lu Mbps, %lu iops\n",
+                    "%llu Rps - IN: %llu Mbps, %llu iops - OUT: %llu Mbps, %llu iops\n",
                     stat_rps_, stat_mbps_in_, stat_iops_in_, stat_mbps_out_,
                     stat_iops_out_);
             }
