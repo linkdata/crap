@@ -23,7 +23,7 @@ public:
     }
 
     response(uint16_t code = 200, int64_t content_length = -1)
-        : record(NULL)
+        : record(0)
         , code_(code)
         , content_length_(content_length)
     {
@@ -34,16 +34,16 @@ public:
         char buf[64];
         int n = sprintf(buf, "%03d", code());
         if (n > 0)
-            out.append(buf, n);
+            out.append(buf, static_cast<size_t>(n));
         out += ' ';
         status().render(out);
         out += '\n';
         headers().render(out);
         if (content_length() >= 0) {
-            n = sprintf(buf, "%lld", content_length());
+            n = sprintf(buf, "%lld", static_cast<long long>(content_length()));
             if (n > 0) {
                 out += "Content-Length: ";
-                out.append(buf, n);
+                out.append(buf, static_cast<size_t>(n));
                 out += '\n';
             }
         }

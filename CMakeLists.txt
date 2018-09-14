@@ -7,7 +7,7 @@
 # Copyright (c)2015-2018 Johan Lindh <johan at linkdata dot se>.
 #
 
-cmake_minimum_required(VERSION 3.10.3)
+cmake_minimum_required(VERSION 3.10)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(CMAKE_CONFIGURATION_TYPES Debug Release)

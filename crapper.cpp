@@ -28,15 +28,15 @@ using boost::asio::ip::tcp;
 class exchange : public std::streambuf {
 public:
     explicit exchange()
-        : exch_(0)
-        , stats_(0)
+        : exch_(nullptr)
+        , stats_(nullptr)
         , id_(rap_conn_exchange_id)
         , contentlength_(-1)
         , contentread_(0)
     {
     }
 
-    void init(rap_exchange* exch, rap::stats* stats = 0)
+    void init(rap_exchange* exch, rap::stats* stats = nullptr)
     {
         exch_ = exch;
         stats_ = stats;
@@ -62,16 +62,14 @@ public:
         return static_cast<exchange*>(exchange_cb_param)->exchange_cb(exch, f, len);
     }
 
-    int exchange_cb(rap_exchange* exch, const rap_frame* f, int len)
+    int exchange_cb(rap_exchange* /*exch*/, const rap_frame* f, int len)
     {
         // TODO: thread safety?
-        assert(f != NULL);
+        assert(f != nullptr);
         assert(len >= rap_frame_header_size);
-        assert(len == rap_frame_header_size + f->header().payload_size());
+        assert(len == rap_frame_header_size + static_cast<int>(f->header().payload_size()));
 
         const rap_header& hdr = f->header();
-        uint16_t id = hdr.id();
-
         rap::reader r(f);
         if (hdr.has_head()) {
             if (stats_)
@@ -101,7 +99,7 @@ public:
         contentlength_ = req.content_length();
         rap::writer(*this) << rap::response(200, req_echo_.size() + contentlength_);
         header().set_body();
-        sputn(req_echo_.data(), req_echo_.size());
+        sputn(req_echo_.data(), static_cast<std::streamsize>(req_echo_.size()));
         return r.error();
     }
 
@@ -109,7 +107,7 @@ public:
     {
         assert(r.size() > 0);
         header().set_body();
-        sputn(r.data(), r.size());
+        sputn(r.data(), static_cast<std::streamsize>(r.size()));
         contentread_ += r.size();
         r.consume();
         return r.error();
@@ -139,7 +137,7 @@ protected:
         bool was_final = header().is_final();
 
         // if (was_final && ch != traits_type::eof())
-            header().clr_final();
+        header().clr_final();
 
         if (sync() != 0) {
             if (was_final)
@@ -153,12 +151,12 @@ protected:
             header().set_head();
 
         if (ch != traits_type::eof()) {
-            *pptr() = ch;
+            *pptr() = static_cast<char>(ch);
             pbump(1);
         } else {
             if (was_final)
                 header().set_final();
-		}
+        }
 
         return ch;
     }
@@ -167,9 +165,9 @@ protected:
 
     int sync()
     {
-        header().set_size_value(pptr() - (buf_.data() + rap_frame_header_size));
+        header().set_size_value(static_cast<size_t>(pptr() - (buf_.data() + rap_frame_header_size)));
         if (write_frame(reinterpret_cast<rap_frame*>(buf_.data()))) {
-            assert(!"rap::exchange::sync(): write_frame() failed");
+            assert(nullptr == "rap::exchange::sync(): write_frame() failed");
             return -1;
         }
         start_write();
@@ -179,11 +177,11 @@ protected:
 private:
     rap_exchange* exch_;
     rap::stats* stats_;
-    rap_exch_id id_;
     std::vector<char> buf_;
     rap::string_t req_echo_;
     int64_t contentlength_;
     int64_t contentread_;
+    rap_exch_id id_;
 
     void start_write()
     {
@@ -201,9 +199,9 @@ class session : public std::enable_shared_from_this<session> {
 public:
     session(tcp::socket socket, rap::stats& stats)
         : socket_(std::move(socket))
-        , conn_(0)
-        , stats_(stats)
         , exchanges_(rap_max_exchange_id + 1)
+        , conn_(nullptr)
+        , stats_(stats)
     {
     }
 
@@ -211,7 +209,7 @@ public:
     {
         if (conn_) {
             rap_conn_destroy(conn_);
-            conn_ = 0;
+            conn_ = nullptr;
         }
     }
 
@@ -320,13 +318,13 @@ private:
           fflush(stderr);
 #endif
 
-                int rap_ec = rap_conn_recv(conn_, data_, (int)length);
+                int rap_ec = rap_conn_recv(conn_, data_, static_cast<int>(length));
                 if (rap_ec < 0) {
                     fprintf(stderr, "rapper::conn::read_stream(): rap error %d\n",
                         rap_ec);
                     fflush(stderr);
                 } else {
-                    assert(rap_ec == (int)length);
+                    assert(rap_ec == static_cast<int>(length));
                 }
 
                 read_stream();
@@ -347,12 +345,8 @@ private:
 
 class server {
 public:
-    server(short port)
-        : acceptor_(io_service_, tcp::endpoint(tcp::v4(), port))
-        , socket_(io_service_)
-        , timer_(io_service_)
-        , thread_pool_size_(1)
-        , last_head_count_(0)
+    server(unsigned short port)
+        : last_head_count_(0)
         , last_read_iops_(0)
         , last_read_bytes_(0)
         , last_write_iops_(0)
@@ -360,6 +354,9 @@ public:
         , last_stat_mbps_in_(0)
         , last_stat_mbps_out_(0)
         , last_stat_rps_(0)
+        , timer_(io_service_)
+        , acceptor_(io_service_, tcp::endpoint(tcp::v4(), port))
+        , socket_(io_service_)
     {
         do_timer();
         do_accept();
@@ -381,7 +378,7 @@ public:
                 threads[i]->join();
         } else {
             io_service_.run();
-		}
+        }
     }
 
 protected:
@@ -461,7 +458,7 @@ private:
                 last_stat_rps_ = stat_rps_;
                 fprintf(
                     stderr,
-                    "%llu Rps - IN: %llu Mbps, %llu iops - OUT: %llu Mbps, %llu iops\n",
+                    "%lu Rps - IN: %lu Mbps, %lu iops - OUT: %lu Mbps, %lu iops\n",
                     stat_rps_, stat_mbps_in_, stat_iops_in_, stat_mbps_out_,
                     stat_iops_out_);
             }
@@ -484,7 +481,7 @@ int main(int argc, char* argv[])
         if (argc == 2) {
             port = argv[1];
         }
-        server s(std::atoi(port));
+        server s(static_cast<unsigned short>(std::atoi(port)));
         s.run();
     } catch (std::exception& e) {
         std::cerr << "Exception: " << e.what() << "\n";
