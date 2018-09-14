@@ -55,10 +55,10 @@ public:
         }
         if (content_length() >= 0) {
             char buf[64];
-            int n = sprintf(buf, "%lld", content_length());
+            int n = sprintf(buf, "%lld", static_cast<long long>(content_length()));
             if (n > 0) {
                 out += "Content-Length: ";
-                out.append(buf, n);
+                out.append(buf, static_cast<size_t>(n));
                 out += '\n';
             }
         }
