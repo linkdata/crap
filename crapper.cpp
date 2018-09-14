@@ -30,9 +30,9 @@ public:
     explicit exchange()
         : exch_(nullptr)
         , stats_(nullptr)
-        , id_(rap_conn_exchange_id)
         , contentlength_(-1)
         , contentread_(0)
+        , id_(rap_conn_exchange_id)
     {
     }
 
@@ -97,7 +97,7 @@ public:
         header().set_head();
         contentread_ = 0;
         contentlength_ = req.content_length();
-        rap::writer(*this) << rap::response(200, req_echo_.size() + contentlength_);
+        rap::writer(*this) << rap::response(200, contentlength_ + static_cast<int64_t>(req_echo_.size()));
         header().set_body();
         sputn(req_echo_.data(), static_cast<std::streamsize>(req_echo_.size()));
         return r.error();
