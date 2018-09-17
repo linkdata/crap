@@ -348,6 +348,7 @@ public:
         , timer_(io_service_)
         , acceptor_(io_service_, tcp::endpoint(tcp::v4(), port))
         , socket_(io_service_)
+        , thread_pool_size_(1)
     {
         do_timer();
         do_accept();
