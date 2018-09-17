@@ -403,12 +403,11 @@ private:
                 socket_.get_option(no_delay_option);
                 socket_.get_option(receive_buffer_size_option);
                 socket_.get_option(send_buffer_size_option);
-                /*
                 fprintf(stderr,
-                        "connection established (no_delay %d, read_stream %d, send
-           %d)\n", no_delay_option.value(), receive_buffer_size_option.value(),
-                        send_buffer_size_option.value());
-        */
+                    "connection established (no_delay %d, read_stream %d, send %d)\n",
+                    no_delay_option.value(),
+                    receive_buffer_size_option.value(),
+                    send_buffer_size_option.value());
                 std::make_shared<session>(std::move(socket_), stats_)->start();
             }
             do_accept();
@@ -424,6 +423,7 @@ private:
             unsigned long long stat_mbps_in_;
             unsigned long long stat_iops_out_;
             unsigned long long stat_mbps_out_;
+            unsigned long long stat_bytes_per_write_ = 0;
 
             n = stats_.head_count;
             stat_rps_ = n - last_head_count_;
@@ -443,6 +443,8 @@ private:
 
             n = stats_.write_bytes;
             stat_mbps_out_ = ((n - last_write_bytes_) * 8) / 1024 / 1024;
+            if (stat_iops_out_ > 0)
+                stat_bytes_per_write_ = (n - last_write_bytes_) / stat_iops_out_;
             last_write_bytes_ = n;
 
             if (stat_mbps_in_ != last_stat_mbps_in_ || stat_mbps_out_ != last_stat_mbps_out_ || stat_rps_ != last_stat_rps_) {
@@ -451,9 +453,9 @@ private:
                 last_stat_rps_ = stat_rps_;
                 fprintf(
                     stderr,
-                    "%llu Rps - IN: %llu Mbps, %llu iops - OUT: %llu Mbps, %llu iops\n",
+                    "%llu Rps - IN: %llu Mbps, %llu iops - OUT: %llu Mbps, %llu iops, %llu bpio\n",
                     stat_rps_, stat_mbps_in_, stat_iops_in_, stat_mbps_out_,
-                    stat_iops_out_);
+                    stat_iops_out_, stat_bytes_per_write_);
             }
         }
         do_timer();
