@@ -134,28 +134,19 @@ protected:
 
         bool was_head = header().has_head();
         bool was_body = header().has_body();
-        bool was_final = header().is_final();
-
-        // if (was_final && ch != traits_type::eof())
-        header().clr_final();
 
         if (sync() != 0) {
-            if (was_final)
-                header().set_final();
             return traits_type::eof();
         }
 
         if (was_body)
             header().set_body();
-        if (was_head)
+        else if (was_head)
             header().set_head();
 
         if (ch != traits_type::eof()) {
             *pptr() = static_cast<char>(ch);
             pbump(1);
-        } else {
-            if (was_final)
-                header().set_final();
         }
 
         return ch;
