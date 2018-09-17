@@ -226,7 +226,7 @@ private:
     // may be called from a foreign thread via the callback
     int write_cb(const char* src_ptr, int src_len)
     {
-        // TODO: thread safety?
+        std::lock_guard<std::mutex> g(write_mtx_);
         buf_towrite_.insert(buf_towrite_.end(), src_ptr, src_ptr + src_len);
         write_some();
         return 0;
@@ -241,7 +241,6 @@ private:
     // may be called from a foreign thread via the callback
     void write_some()
     {
-        // TODO: thread safety?
         if (!buf_writing_.empty() || buf_towrite_.empty())
             return;
         buf_writing_.swap(buf_towrite_);
@@ -267,6 +266,7 @@ private:
         boost::asio::async_write(
             socket_, boost::asio::buffer(src_ptr, src_len),
             [this, self](boost::system::error_code ec, std::size_t length) {
+                std::lock_guard<std::mutex> g(write_mtx_);
                 if (ec) {
                     fprintf(stderr, "rapper::conn::write_stream(%s, %lu)\n",
                         ec.message().c_str(), static_cast<unsigned long>(length));
@@ -327,6 +327,7 @@ private:
     };
     tcp::socket socket_;
     char data_[max_length];
+    std::mutex write_mtx_; // guards the buffers below
     std::vector<char> buf_towrite_;
     std::vector<char> buf_writing_;
     std::vector<exchange> exchanges_;
