@@ -33,8 +33,8 @@ public:
         , contentlength_(-1)
         , contentread_(0)
         , id_(rap_conn_exchange_id)
-    {
-    }
+	{
+	}
 
     void init(rap_exchange* exch, rap::stats* stats = nullptr)
     {
@@ -43,6 +43,8 @@ public:
         if (exch_) {
             id_ = rap_exch_get_id(exch_);
             rap_exch_set_callback(exch, s_exchange_cb, this);
+            finalframe_.set_id(id_);
+            finalframe_.set_final();
         }
         start_write();
     }
@@ -80,8 +82,7 @@ public:
             process_body(r);
         pubsync();
         if (contentread_ >= contentlength_) {
-            header().set_final();
-            pubsync();
+            write_frame(reinterpret_cast<const rap_frame*>(finalframe_.data()));
         }
         return 0;
     }
@@ -173,6 +174,7 @@ private:
     int64_t contentlength_;
     int64_t contentread_;
     rap_exch_id id_;
+    rap_header finalframe_;
 
     void start_write()
     {
