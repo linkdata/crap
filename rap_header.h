@@ -24,7 +24,7 @@ struct rap_header {
         buf_[3] = 0;
     }
 
-    explicit rap_header(uint16_t id)
+    explicit rap_header(rap_exch_id id)
     {
         buf_[0] = 0;
         buf_[1] = 0;
