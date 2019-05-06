@@ -14,14 +14,14 @@ typedef void rap_exchange;
     A nonzero return value indicates the network socket has been
     closed and connection should terminate.
 */
-typedef int (*rap_conn_write_cb_t)(void* conn_user_data, const char* p, int n);
+typedef int (*rap_muxer_write_cb_t)(void* muxer_user_data, const char* p, int n);
 
 /*
     One-time initialization of RAP exchanges. Called for an exchange before
     it is allowed to process data. Use it to create instances of your own 
     handler objects, and set the exchange's callback parameters.
 */
-typedef void (*rap_conn_exch_init_cb_t)(void* conn_user_data, rap_exch_id id, rap_exchange* exch);
+typedef void (*rap_muxer_exch_init_cb_t)(void* muxer_user_data, rap_exch_id id, rap_exchange* exch);
 
 /*
     int rap_exchange_cb(

@@ -19,7 +19,7 @@ public:
         , exchange_cb_(0)
         , exchange_cb_param_(0)
         , queue_(NULL)
-        , id_(rap_conn_exchange_id)
+        , id_(rap_muxer_exchange_id)
         , send_window_(0)
     {
     }
@@ -48,7 +48,7 @@ public:
     {
         while (queue_)
             framelink::dequeue(&queue_);
-        id_ = rap_conn_exchange_id;
+        id_ = rap_muxer_exchange_id;
     }
 
     int set_callback(rap_exchange_cb_t exchange_cb, void* exchange_cb_param)
@@ -127,7 +127,7 @@ private:
     error send_frame(const rap_frame* f)
     {
         if (write(f->data(), static_cast<int>(f->size()))) {
-            assert(!"rap::exchange::send_frame(): conn_.write() failed");
+            assert(!"rap::exchange::send_frame(): muxer_.write() failed");
             return rap_err_output_buffer_too_small;
         }
         if (!f->header().is_final())

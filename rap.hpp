@@ -56,12 +56,12 @@ class route;
 class kvv;
 class exchange;
 class net;
-class conn;
+class muxer;
 
 } // namespace rap
 
-#define RAP_CONN_DEFINED 1
-typedef rap::conn rap_conn;
+#define RAP_MUXER_DEFINED 1
+typedef rap::muxer rap_muxer;
 
 #define RAP_EXCHANGE_DEFINED 1
 typedef rap::exchange rap_exchange;

@@ -16,9 +16,9 @@ extern "C" {
     Compact REST Aggregation Protocol library
 */
 
-#ifndef RAP_CONN_DEFINED
-#define RAP_CONN_DEFINED 1
-typedef void rap_conn;
+#ifndef RAP_MUXER_DEFINED
+#define RAP_MUXER_DEFINED 1
+typedef void rap_muxer;
 #endif
 
 #ifndef RAP_EXCHANGE_DEFINED
@@ -47,25 +47,25 @@ enum {
 /*
 * Network-side connection-level API
 *
-* For each connected RAP peer, create a `rap_conn`
+* For each connected RAP peer, create a `rap_muxer`
 * with callbacks for writing to the network and to
 * initialize exchanges.
 * 
-* Then repeatedly call `rap_conn_recv()` to submit incoming
-* network data. Once `rap_conn_recv()` returns a negative
-* value, close the connection and call `rap_conn_destroy()`
+* Then repeatedly call `rap_muxer_recv()` to submit incoming
+* network data. Once `rap_muxer_recv()` returns a negative
+* value, close the connection and call `rap_muxer_destroy()`
 * to free up the RAP connection resources.
 * 
-* The `conn_exch_init_cb` callback will be called when an
+* The `muxer_exch_init_cb` callback will be called when an
 * exchange is set up for the first time. Use `rap_exch_set_callback()`
 * to set it up to handle requests and responses. Once initialized,
 * an exchange will never change it's ID, and won't be destroyed until
 * it's associated connection is destroyed.
 */
 
-rap_conn* rap_conn_create(void* conn_user_data, rap_conn_write_cb_t conn_write_cb, rap_conn_exch_init_cb_t conn_exch_init_cb);
-int rap_conn_recv(rap_conn* conn, const char* buf, int len);
-void rap_conn_destroy(rap_conn* conn);
+rap_muxer* rap_muxer_create(void* muxer_user_data, rap_muxer_write_cb_t muxer_write_cb, rap_muxer_exch_init_cb_t muxer_exch_init_cb);
+int rap_muxer_recv(rap_muxer* muxer, const char* buf, int len);
+void rap_muxer_destroy(rap_muxer* muxer);
 
 /*
 * Exchange level API

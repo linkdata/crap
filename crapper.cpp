@@ -13,8 +13,8 @@
 #include <utility>
 
 #include "rap.hpp"
-#include "rap_conn.hpp"
 #include "rap_exchange.hpp"
+#include "rap_muxer.hpp"
 #include "rap_reader.hpp"
 #include "rap_request.hpp"
 #include "rap_response.hpp"
@@ -32,9 +32,9 @@ public:
         , stats_(nullptr)
         , contentlength_(-1)
         , contentread_(0)
-        , id_(rap_conn_exchange_id)
-	{
-	}
+        , id_(rap_muxer_exchange_id)
+    {
+    }
 
     void init(rap_exchange* exch, rap::stats* stats = nullptr)
     {
@@ -193,23 +193,23 @@ public:
     session(tcp::socket socket, rap::stats& stats)
         : socket_(std::move(socket))
         , exchanges_(rap_max_exchange_id + 1)
-        , conn_(nullptr)
+        , muxer_(nullptr)
         , stats_(stats)
     {
     }
 
     ~session()
     {
-        if (conn_) {
-            rap_conn_destroy(conn_);
-            conn_ = nullptr;
+        if (muxer_) {
+            rap_muxer_destroy(muxer_);
+            muxer_ = nullptr;
         }
     }
 
     void start()
     {
-        if (!conn_) {
-            conn_ = rap_conn_create(this, s_write_cb, s_exch_init_cb);
+        if (!muxer_) {
+            muxer_ = rap_muxer_create(this, s_write_cb, s_exch_init_cb);
         }
         read_stream();
     }
@@ -239,7 +239,7 @@ private:
         exchanges_[id].init(exch, &stats_);
     }
 
-    // writes any buffered data to the stream using conn_t::write_stream()
+    // writes any buffered data to the stream using muxer_t::write_stream()
     // may be called from a foreign thread via the callback
     void write_some()
     {
@@ -270,7 +270,7 @@ private:
             [this, self](boost::system::error_code ec, std::size_t length) {
                 std::lock_guard<std::mutex> g(write_mtx_);
                 if (ec) {
-                    fprintf(stderr, "rapper::conn::write_stream(%s, %lu)\n",
+                    fprintf(stderr, "rapper::muxer::write_stream(%s, %lu)\n",
                         ec.message().c_str(), static_cast<unsigned long>(length));
                     fflush(stderr);
                     return;
@@ -292,7 +292,7 @@ private:
             [this, self](boost::system::error_code ec, std::size_t length) {
                 if (ec) {
                     if (ec != boost::asio::error::eof) {
-                        fprintf(stderr, "rapper::conn::read_stream(%s, %lu) [%d]\n",
+                        fprintf(stderr, "rapper::muxer::read_stream(%s, %lu) [%d]\n",
                             ec.message().c_str(), static_cast<unsigned long>(length),
                             ec.value());
                         fflush(stderr);
@@ -311,9 +311,9 @@ private:
           fflush(stderr);
 #endif
 
-                int rap_ec = rap_conn_recv(conn_, data_, static_cast<int>(length));
+                int rap_ec = rap_muxer_recv(muxer_, data_, static_cast<int>(length));
                 if (rap_ec < 0) {
-                    fprintf(stderr, "rapper::conn::read_stream(): rap error %d\n",
+                    fprintf(stderr, "rapper::muxer::read_stream(): rap error %d\n",
                         rap_ec);
                     fflush(stderr);
                 } else {
@@ -333,7 +333,7 @@ private:
     std::vector<char> buf_towrite_;
     std::vector<char> buf_writing_;
     std::vector<exchange> exchanges_;
-    rap_conn* conn_;
+    rap_muxer* muxer_;
     rap::stats& stats_;
 };
 

@@ -14,7 +14,7 @@ struct rap_header {
     static const unsigned char mask_final = 0x80;
     static const unsigned char mask_head = 0x40;
     static const unsigned char mask_body = 0x20;
-    static const unsigned char mask_id = (rap_conn_exchange_id >> 8);
+    static const unsigned char mask_id = (rap_muxer_exchange_id >> 8);
 
     rap_header()
     {

@@ -1,5 +1,5 @@
-#ifndef RAP_CONN_HPP
-#define RAP_CONN_HPP
+#ifndef RAP_MUXER_HPP
+#define RAP_MUXER_HPP
 
 #include <cassert>
 #include <cstdint>
@@ -16,26 +16,26 @@
 
 namespace rap {
 
-class conn : public link {
+class muxer : public link {
 public:
-    explicit conn(void* conn_user_data,
-        rap_conn_write_cb_t conn_write_cb,
-        rap_conn_exch_init_cb_t conn_exch_init_cb)
-        : link(conn_user_data, conn_write_cb)
+    explicit muxer(void* muxer_user_data,
+        rap_muxer_write_cb_t muxer_write_cb,
+        rap_muxer_exch_init_cb_t muxer_exch_init_cb)
+        : link(muxer_user_data, muxer_write_cb)
         , exchanges_(rap_max_exchange_id + 1)
     {
         // assert correctly initialized exchange vector
         assert(exchanges_.size() == rap_max_exchange_id + 1);
         for (rap_exch_id id = 0; id < exchanges_.size(); ++id) {
             exchanges_[id].init(
-                static_cast<rap_conn*>(this), id, rap_max_send_window, 0, 0);
+                static_cast<rap_muxer*>(this), id, rap_max_send_window, 0, 0);
             assert(exchanges_[id].id() == id);
-            if (conn_exch_init_cb != 0)
-                conn_exch_init_cb(this->conn_user_data(), id, &exchanges_[id]);
+            if (muxer_exch_init_cb != 0)
+                muxer_exch_init_cb(this->muxer_user_data(), id, &exchanges_[id]);
         }
     }
 
-    virtual ~conn() {}
+    virtual ~muxer() {}
 
     /**
      * @brief Get the exchange object identified by it's ID
@@ -53,7 +53,7 @@ public:
 private:
     std::vector<rap::exchange> exchanges_;
 
-    void process_conn(const rap_frame* f) { assert(!"TODO!"); }
+    void process_muxer(const rap_frame* f) { assert(!"TODO!"); }
 
     bool process_frame(rap_exch_id id, const rap_frame* f, int len, rap::error& ec)
     {
@@ -63,7 +63,7 @@ private:
             ec = rap_err_invalid_exchange_id;
 #ifndef NDEBUG
             fprintf(stderr,
-                "rap::conn_impl::process_frame(): exchange id %04x out of range\n",
+                "rap::muxer::process_frame(): exchange id %04x out of range\n",
                 id);
 #endif
             return false;
@@ -73,4 +73,4 @@ private:
 
 } // namespace rap
 
-#endif // RAP_CONN_HPP
+#endif // RAP_MUXER_HPP

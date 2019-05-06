@@ -18,9 +18,9 @@ namespace rap {
  */
 class link {
 public:
-    explicit link(void* conn_user_data, rap_conn_write_cb_t conn_write_cb)
-        : conn_user_data_(conn_user_data)
-        , conn_write_cb_(conn_write_cb)
+    explicit link(void* muxer_user_data, rap_muxer_write_cb_t muxer_write_cb)
+        : muxer_user_data_(muxer_user_data)
+        , muxer_write_cb_(muxer_write_cb)
         , frame_ptr_(frame_buf_)
     {
     }
@@ -28,16 +28,16 @@ public:
     virtual ~link() {}
 
     /**
-     * @brief write() calls the #conn_write_cb callback function, 
+     * @brief write() calls the #muxer_write_cb callback function, 
      * writing @a src_len bytes from @a src_buf to the network.
      * 
      * @param src_buf the bytes to write, must not be NULL
      * @param src_len the number of bytes to write
-     * @return int return value from #conn_write_cb
+     * @return int return value from #muxer_write_cb
      */
     int write(const char* src_buf, int src_len) const
     {
-        return conn_write_cb_(conn_user_data(), src_buf, src_len);
+        return muxer_write_cb_(muxer_user_data(), src_buf, src_len);
     }
 
     /**
@@ -79,8 +79,8 @@ public:
             // frame completed
             const rap_frame* f = reinterpret_cast<const rap_frame*>(frame_buf_);
             uint16_t id = f->header().id();
-            if (id == rap_conn_exchange_id) {
-                process_conn(f);
+            if (id == rap_muxer_exchange_id) {
+                process_muxer(f);
             } else {
                 error ec = rap_err_ok;
                 process_frame(id, f, static_cast<int>(frame_ptr_ - frame_buf_), ec);
@@ -92,13 +92,13 @@ public:
     }
 
 protected:
-    void* conn_user_data() const { return conn_user_data_; }
-    virtual void process_conn(const rap_frame* f) = 0;
+    void* muxer_user_data() const { return muxer_user_data_; }
+    virtual void process_muxer(const rap_frame* f) = 0;
     virtual bool process_frame(rap_exch_id id, const rap_frame* f, int len, rap::error& ec) = 0;
 
 private:
-    void* conn_user_data_;
-    rap_conn_write_cb_t conn_write_cb_;
+    void* muxer_user_data_;
+    rap_muxer_write_cb_t muxer_write_cb_;
     char frame_buf_[rap_frame_max_size];
     char* frame_ptr_;
 };
