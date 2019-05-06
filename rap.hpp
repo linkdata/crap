@@ -24,7 +24,7 @@ typedef enum {
     rap_err_string_index_unknown = 9,
     rap_err_incomplete_lookup = 10,
     rap_err_string_too_long = 11,
-    rap_err_invalid_exchange_id = 12,
+    rap_err_invalid_conn_id = 12,
     rap_err_incomplete_number = 13,
     rap_err_incomplete_body = 14
 } error;
@@ -54,7 +54,7 @@ typedef std::string string_t;
 class text;
 class route;
 class kvv;
-class exchange;
+class conn;
 class net;
 class muxer;
 
@@ -63,7 +63,7 @@ class muxer;
 #define RAP_MUXER_DEFINED 1
 typedef rap::muxer rap_muxer;
 
-#define RAP_EXCHANGE_DEFINED 1
-typedef rap::exchange rap_exchange;
+#define RAP_CONN_DEFINED 1
+typedef rap::conn rap_conn;
 
 #endif // RAP_HPP

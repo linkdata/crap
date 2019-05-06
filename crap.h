@@ -21,9 +21,9 @@ extern "C" {
 typedef void rap_muxer;
 #endif
 
-#ifndef RAP_EXCHANGE_DEFINED
-#define RAP_EXCHANGE_DEFINED 1
-typedef void rap_exchange;
+#ifndef RAP_CONN_DEFINED
+#define RAP_CONN_DEFINED 1
+typedef void rap_conn;
 #endif
 
 #ifndef RAP_PARSER_DEFINED
@@ -45,46 +45,46 @@ enum {
 };
 
 /*
-* Network-side connection-level API
+* Muxer API
 *
 * For each connected RAP peer, create a `rap_muxer`
 * with callbacks for writing to the network and to
-* initialize exchanges.
+* initialize connections.
 * 
 * Then repeatedly call `rap_muxer_recv()` to submit incoming
 * network data. Once `rap_muxer_recv()` returns a negative
 * value, close the connection and call `rap_muxer_destroy()`
 * to free up the RAP connection resources.
 * 
-* The `muxer_exch_init_cb` callback will be called when an
-* exchange is set up for the first time. Use `rap_exch_set_callback()`
+* The `muxer_conn_init_cb` callback will be called when a
+* connection is set up for the first time. Use `rap_conn_set_callback()`
 * to set it up to handle requests and responses. Once initialized,
-* an exchange will never change it's ID, and won't be destroyed until
+* a connection object will never change it's ID, and won't be destroyed until
 * it's associated connection is destroyed.
 */
 
-rap_muxer* rap_muxer_create(void* muxer_user_data, rap_muxer_write_cb_t muxer_write_cb, rap_muxer_exch_init_cb_t muxer_exch_init_cb);
+rap_muxer* rap_muxer_create(void* muxer_user_data, rap_muxer_write_cb_t muxer_write_cb, rap_muxer_conn_init_cb_t muxer_conn_init_cb);
 int rap_muxer_recv(rap_muxer* muxer, const char* buf, int len);
 void rap_muxer_destroy(rap_muxer* muxer);
 
 /*
-* Exchange level API
+* Connection API
 */
 
-rap_exch_id rap_exch_get_id(const rap_exchange* exch);
-int rap_exch_set_callback(rap_exchange* exch, rap_exchange_cb_t exchange_cb,
-    void* exchange_cb_param);
-int rap_exch_get_callback(const rap_exchange* exch,
-    rap_exchange_cb_t* p_frame_cb,
-    void** p_frame_cb_param);
-int rap_exch_write_frame(rap_exchange* exch, const rap_frame* f);
+rap_conn_id rap_conn_get_id(const rap_conn* conn);
+int rap_conn_set_callback(rap_conn* conn, rap_conn_cb_t conn_cb,
+    void* conn_cb_param);
+int rap_conn_get_callback(const rap_conn* conn,
+    rap_conn_cb_t* p_conn_cb,
+    void** p_conn_cb_param);
+int rap_conn_write_frame(rap_conn* conn, const rap_frame* f);
 
 /*
 * Frame API
 */
 rap_frame* rap_frame_create(int payload_max_size);
 void rap_frame_destroy(rap_frame*);
-rap_exch_id rap_frame_id(const rap_frame*);
+rap_conn_id rap_frame_id(const rap_frame*);
 size_t rap_frame_needed_bytes(const char*);
 int rap_frame_payload_max_size(const rap_frame*);
 const char* rap_frame_payload_start(const rap_frame*);

@@ -3,6 +3,6 @@
 
 #include <stdint.h>
 
-typedef uint16_t rap_exch_id;
+typedef uint16_t rap_conn_id;
 
 #endif /* RAP_TYPES_H */

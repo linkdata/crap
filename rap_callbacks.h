@@ -3,9 +3,9 @@
 
 #include "rap_frame.h"
 
-#ifndef RAP_EXCHANGE_DEFINED
-#define RAP_EXCHANGE_DEFINED 1
-typedef void rap_exchange;
+#ifndef RAP_CONN_DEFINED
+#define RAP_CONN_DEFINED 1
+typedef void rap_conn;
 #endif
 
 /*
@@ -17,24 +17,24 @@ typedef void rap_exchange;
 typedef int (*rap_muxer_write_cb_t)(void* muxer_user_data, const char* p, int n);
 
 /*
-    One-time initialization of RAP exchanges. Called for an exchange before
+    One-time initialization of RAP connections. Called for a connection before
     it is allowed to process data. Use it to create instances of your own 
-    handler objects, and set the exchange's callback parameters.
+    handler objects, and set the connections callback parameters.
 */
-typedef void (*rap_muxer_exch_init_cb_t)(void* muxer_user_data, rap_exch_id id, rap_exchange* exch);
+typedef void (*rap_muxer_conn_init_cb_t)(void* muxer_user_data, rap_conn_id id, rap_conn* conn);
 
 /*
-    int rap_exchange_cb(
-        void* exchange_cb_param,
-        rap_exchange* exch,
+    int rap_conn_cb(
+        void* conn_cb_param,
+        rap_conn* conn,
         const rap_frame* f,
         int n)
 
     The frame callback is invoked when a new frame is received for
-    an exchange.
+    a connection.
     A nonzero return value indicates the connection should terminate.
 */
-typedef int (*rap_exchange_cb_t)(void* exchange_cb_param, rap_exchange* exch,
+typedef int (*rap_conn_cb_t)(void* conn_cb_param, rap_conn* conn,
     const rap_frame* f, int n);
 
 #endif /* RAP_CALLBACKS_H */

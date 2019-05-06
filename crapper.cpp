@@ -13,7 +13,7 @@
 #include <utility>
 
 #include "rap.hpp"
-#include "rap_exchange.hpp"
+#include "rap_conn.hpp"
 #include "rap_muxer.hpp"
 #include "rap_reader.hpp"
 #include "rap_request.hpp"
@@ -25,31 +25,31 @@
 
 using boost::asio::ip::tcp;
 
-class exchange : public std::streambuf {
+class conn : public std::streambuf {
 public:
-    explicit exchange()
-        : exch_(nullptr)
+    explicit conn()
+        : conn_(nullptr)
         , stats_(nullptr)
         , contentlength_(-1)
         , contentread_(0)
-        , id_(rap_muxer_exchange_id)
+        , id_(rap_muxer_conn_id)
     {
     }
 
-    void init(rap_exchange* exch, rap::stats* stats = nullptr)
+    void init(rap_conn* conn, rap::stats* stats = nullptr)
     {
-        exch_ = exch;
+        conn_ = conn;
         stats_ = stats;
-        if (exch_) {
-            id_ = rap_exch_get_id(exch_);
-            rap_exch_set_callback(exch, s_exchange_cb, this);
+        if (conn_) {
+            id_ = rap_conn_get_id(conn_);
+            rap_conn_set_callback(conn, s_conn_cb, this);
             finalframe_.set_id(id_);
             finalframe_.set_final();
         }
         start_write();
     }
 
-    rap_exch_id id() const { return id_; }
+    rap_conn_id id() const { return id_; }
 
     const rap_header& header() const
     {
@@ -58,13 +58,13 @@ public:
 
     rap_header& header() { return *reinterpret_cast<rap_header*>(buf_.data()); }
 
-    static int s_exchange_cb(void* exchange_cb_param, rap_exchange* exch,
+    static int s_conn_cb(void* conn_cb_param, rap_conn* conn,
         const rap_frame* f, int len)
     {
-        return static_cast<exchange*>(exchange_cb_param)->exchange_cb(exch, f, len);
+        return static_cast<class conn*>(conn_cb_param)->conn_cb(conn, f, len);
     }
 
-    int exchange_cb(rap_exchange* /*exch*/, const rap_frame* f, int len)
+    int conn_cb(rap_conn* /*conn*/, const rap_frame* f, int len)
     {
         // TODO: thread safety?
         assert(f != nullptr);
@@ -123,7 +123,7 @@ public:
     }
 
 protected:
-    exchange::int_type overflow(int_type ch)
+    conn::int_type overflow(int_type ch)
     {
         if (buf_.size() < rap_frame_max_size) {
             size_t new_size = buf_.size() * 2;
@@ -153,13 +153,13 @@ protected:
         return ch;
     }
 
-    int write_frame(const rap_frame* f) { return rap_exch_write_frame(exch_, f); }
+    int write_frame(const rap_frame* f) { return rap_conn_write_frame(conn_, f); }
 
     int sync()
     {
         header().set_size_value(static_cast<size_t>(pptr() - (buf_.data() + rap_frame_header_size)));
         if (write_frame(reinterpret_cast<rap_frame*>(buf_.data()))) {
-            assert(nullptr == "rap::exchange::sync(): write_frame() failed");
+            assert(nullptr == "rap::conn::sync(): write_frame() failed");
             return -1;
         }
         start_write();
@@ -167,13 +167,13 @@ protected:
     }
 
 private:
-    rap_exchange* exch_;
+    rap_conn* conn_;
     rap::stats* stats_;
     std::vector<char> buf_;
     rap::string_t req_echo_;
     int64_t contentlength_;
     int64_t contentread_;
-    rap_exch_id id_;
+    rap_conn_id id_;
     rap_header finalframe_;
 
     void start_write()
@@ -192,7 +192,7 @@ class session : public std::enable_shared_from_this<session> {
 public:
     session(tcp::socket socket, rap::stats& stats)
         : socket_(std::move(socket))
-        , exchanges_(rap_max_exchange_id + 1)
+        , conns_(rap_max_conn_id + 1)
         , muxer_(nullptr)
         , stats_(stats)
     {
@@ -209,7 +209,7 @@ public:
     void start()
     {
         if (!muxer_) {
-            muxer_ = rap_muxer_create(this, s_write_cb, s_exch_init_cb);
+            muxer_ = rap_muxer_create(this, s_write_cb, s_conn_init_cb);
         }
         read_stream();
     }
@@ -220,9 +220,9 @@ private:
         return static_cast<session*>(self)->write_cb(src_ptr, src_len);
     }
 
-    static void s_exch_init_cb(void* self, rap_exch_id id, rap_exchange* exch)
+    static void s_conn_init_cb(void* self, rap_conn_id id, rap_conn* conn)
     {
-        static_cast<session*>(self)->exch_init(id, exch);
+        static_cast<session*>(self)->conn_init(id, conn);
     }
 
     // may be called from a foreign thread via the callback
@@ -234,9 +234,9 @@ private:
         return 0;
     }
 
-    void exch_init(rap_exch_id id, rap_exchange* exch)
+    void conn_init(rap_conn_id id, rap_conn* conn)
     {
-        exchanges_[id].init(exch, &stats_);
+        conns_[id].init(conn, &stats_);
     }
 
     // writes any buffered data to the stream using muxer_t::write_stream()
@@ -332,7 +332,7 @@ private:
     std::mutex write_mtx_; // guards the buffers below
     std::vector<char> buf_towrite_;
     std::vector<char> buf_writing_;
-    std::vector<exchange> exchanges_;
+    std::vector<conn> conns_;
     rap_muxer* muxer_;
     rap::stats& stats_;
 };

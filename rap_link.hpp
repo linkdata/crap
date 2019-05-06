@@ -13,7 +13,7 @@ namespace rap {
 
 /**
  * @brief link maintains the per-network-link state and functionality to
- *        serve both the #conn and #exchange classes.
+ *        serve both the #muxer and #conn classes.
  * 
  */
 class link {
@@ -79,7 +79,7 @@ public:
             // frame completed
             const rap_frame* f = reinterpret_cast<const rap_frame*>(frame_buf_);
             uint16_t id = f->header().id();
-            if (id == rap_muxer_exchange_id) {
+            if (id == rap_muxer_conn_id) {
                 process_muxer(f);
             } else {
                 error ec = rap_err_ok;
@@ -94,7 +94,7 @@ public:
 protected:
     void* muxer_user_data() const { return muxer_user_data_; }
     virtual void process_muxer(const rap_frame* f) = 0;
-    virtual bool process_frame(rap_exch_id id, const rap_frame* f, int len, rap::error& ec) = 0;
+    virtual bool process_frame(rap_conn_id id, const rap_frame* f, int len, rap::error& ec) = 0;
 
 private:
     void* muxer_user_data_;
