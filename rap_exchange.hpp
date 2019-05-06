@@ -15,10 +15,10 @@ namespace rap {
 class exchange {
 public:
     explicit exchange()
-        : link_(0)
-        , exchange_cb_(0)
-        , exchange_cb_param_(0)
-        , queue_(NULL)
+        : link_(nullptr)
+        , exchange_cb_(nullptr)
+        , exchange_cb_param_(nullptr)
+        , queue_(nullptr)
         , id_(rap_muxer_exchange_id)
         , send_window_(0)
     {
@@ -32,9 +32,9 @@ public:
         link_ = link;
         exchange_cb_ = exchange_cb;
         exchange_cb_param_ = exchange_cb_param;
-        queue_ = NULL;
+        queue_ = nullptr;
         id_ = id;
-        send_window_ = send_window;
+        send_window_ = static_cast<int16_t>(send_window);
 
         ack_[0] = '\0';
         ack_[1] = '\0';
@@ -113,7 +113,7 @@ private:
 
     error write_queue()
     {
-        while (queue_ != NULL) {
+        while (queue_ != nullptr) {
             rap_frame* f = reinterpret_cast<rap_frame*>(queue_ + 1);
             if (!f->header().is_final() && send_window_ < 1)
                 return rap_err_ok;
@@ -127,7 +127,7 @@ private:
     error send_frame(const rap_frame* f)
     {
         if (write(f->data(), static_cast<int>(f->size()))) {
-            assert(!"rap::exchange::send_frame(): muxer_.write() failed");
+            assert("rap::exchange::send_frame(): muxer_.write() failed" == nullptr);
             return rap_err_output_buffer_too_small;
         }
         if (!f->header().is_final())
