@@ -82,7 +82,7 @@ public:
             process_body(r);
         pubsync();
         if (contentread_ >= contentlength_) {
-            write_frame(reinterpret_cast<const rap_frame*>(finalframe_.data()));
+            write_frame(finalframe_);
         }
         return 0;
     }
@@ -154,11 +154,13 @@ protected:
     }
 
     int write_frame(const rap_frame* f) { return rap_conn_write_frame(conn_, f); }
+    int write_frame(const rap_header& h) { return write_frame(reinterpret_cast<const rap_frame*>(&h)); }
+    int write_frame(const std::vector<char>& v) { return write_frame(reinterpret_cast<const rap_frame*>(v.data())); }
 
     int sync()
     {
         header().set_size_value(static_cast<size_t>(pptr() - (buf_.data() + rap_frame_header_size)));
-        if (write_frame(reinterpret_cast<rap_frame*>(buf_.data()))) {
+        if (write_frame(buf_)) {
             assert(nullptr == "rap::conn::sync(): write_frame() failed");
             return -1;
         }
