@@ -272,7 +272,7 @@ private:
             [this, self](boost::system::error_code ec, std::size_t length) {
                 std::lock_guard<std::mutex> g(write_mtx_);
                 if (ec) {
-                    fprintf(stderr, "rapper::muxer::write_stream(%s, %lu)\n",
+                    fprintf(stderr, "crapper::muxer::write_stream(%s, %lu)\n",
                         ec.message().c_str(), static_cast<unsigned long>(length));
                     fflush(stderr);
                     return;
@@ -294,7 +294,7 @@ private:
             [this, self](boost::system::error_code ec, std::size_t length) {
                 if (ec) {
                     if (ec != boost::asio::error::eof) {
-                        fprintf(stderr, "rapper::muxer::read_stream(%s, %lu) [%d]\n",
+                        fprintf(stderr, "crapper::muxer::read_stream(%s, %lu) [%d]\n",
                             ec.message().c_str(), static_cast<unsigned long>(length),
                             ec.value());
                         fflush(stderr);
@@ -315,7 +315,7 @@ private:
 
                 int rap_ec = rap_muxer_recv(muxer_, data_, static_cast<int>(length));
                 if (rap_ec < 0) {
-                    fprintf(stderr, "rapper::muxer::read_stream(): rap error %d\n",
+                    fprintf(stderr, "crapper::muxer::read_stream(): rap error %d\n",
                         rap_ec);
                     fflush(stderr);
                 } else {
