@@ -6,9 +6,6 @@
 
 #include "rap_constants.h"
 
-enum {
-};
-
 struct rap_header {
     // these masks apply to buf_[2]
     static const unsigned char mask_final = 0x80;
