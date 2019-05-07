@@ -23,7 +23,7 @@ public:
     }
 
     response(uint16_t code = 200, int64_t content_length = -1)
-        : record(0)
+        : record(nullptr)
         , code_(code)
         , content_length_(content_length)
     {

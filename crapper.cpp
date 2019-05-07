@@ -23,6 +23,35 @@
 /* crap.h must be included after rap.hpp */
 #include "crap.h"
 
+#define PRINT_STREAM stderr
+#define PRINT_NETDATA 1
+
+#if PRINT_NETDATA
+static void print_netdata(char rw, const char* src_ptr, const char* src_end) {
+    while (src_ptr < src_end) {
+        const char* p = src_ptr;
+        int n = 0;
+        fprintf(PRINT_STREAM, "%c: ", rw);
+        while (p < src_end && n++ < 16)
+            fprintf(PRINT_STREAM, "%02x ", (*p++) & 0xFF);
+        while (n++ < 16)
+            fprintf(PRINT_STREAM, "   ");
+        fputc(' ', PRINT_STREAM);
+        p = src_ptr;
+        n = 0;
+        while (p < src_end && n++ < 16) {
+            int ch = (*p++) & 0xFF;
+            if (!isgraph(ch)) ch = '.';
+            fputc(ch, PRINT_STREAM);
+        }
+        fputc('\n', PRINT_STREAM);
+        src_ptr += 16;
+    }
+    fflush(PRINT_STREAM);
+}
+#endif
+
+
 using boost::asio::ip::tcp;
 
 class conn : public std::streambuf {
@@ -94,7 +123,6 @@ public:
         rap::request req(r);
         req_echo_.clear();
         req.render(req_echo_);
-        req_echo_ += '\n';
         header().set_head();
         contentread_ = 0;
         contentlength_ = req.content_length();
@@ -108,6 +136,7 @@ public:
     {
         assert(r.size() > 0);
         header().set_body();
+        sputc('\n');
         sputn(r.data(), static_cast<std::streamsize>(r.size()));
         contentread_ += r.size();
         r.consume();
@@ -153,17 +182,22 @@ protected:
         return ch;
     }
 
-    int write_frame(const rap_frame* f) { return rap_conn_write_frame(conn_, f); }
+    int write_frame(const rap_frame* f) {
+        int r = rap_conn_write_frame(conn_, f);
+        if (r) {
+            fprintf(PRINT_STREAM, "crapper::conn::write_frame(): error %d", r);
+            assert(r == 0);
+        }
+        return r;
+    }
     int write_frame(const rap_header& h) { return write_frame(reinterpret_cast<const rap_frame*>(&h)); }
     int write_frame(const std::vector<char>& v) { return write_frame(reinterpret_cast<const rap_frame*>(v.data())); }
 
     int sync()
     {
         header().set_size_value(static_cast<size_t>(pptr() - (buf_.data() + rap_frame_header_size)));
-        if (write_frame(buf_)) {
-            assert(nullptr == "rap::conn::sync(): write_frame() failed");
+        if (write_frame(buf_))
             return -1;
-        }
         start_write();
         return 0;
     }
@@ -256,15 +290,8 @@ private:
     {
         auto self(shared_from_this());
 
-#if 0
-    const char* src_end = src_ptr + src_len;
-    const char* p = src_ptr;
-    fprintf(stderr, "W: ");
-    while (p < src_end) {
-      fprintf(stderr, "%02x ", (*p++) & 0xFF);
-    }
-    fprintf(stderr, "\n");
-    fflush(stderr);
+#if PRINT_NETDATA
+        print_netdata('W', src_ptr, src_ptr + src_len);
 #endif
 
         boost::asio::async_write(
@@ -272,9 +299,9 @@ private:
             [this, self](boost::system::error_code ec, std::size_t length) {
                 std::lock_guard<std::mutex> g(write_mtx_);
                 if (ec) {
-                    fprintf(stderr, "crapper::muxer::write_stream(%s, %lu)\n",
+                    fprintf(PRINT_STREAM, "crapper::muxer::write_stream(%s, %lu)\n",
                         ec.message().c_str(), static_cast<unsigned long>(length));
-                    fflush(stderr);
+                    fflush(PRINT_STREAM);
                     return;
                 } else {
                     assert(length == buf_writing_.size());
@@ -294,30 +321,22 @@ private:
             [this, self](boost::system::error_code ec, std::size_t length) {
                 if (ec) {
                     if (ec != boost::asio::error::eof) {
-                        fprintf(stderr, "crapper::muxer::read_stream(%s, %lu) [%d]\n",
+                        fprintf(PRINT_STREAM, "crapper::muxer::read_stream(%s, %lu) [%d]\n",
                             ec.message().c_str(), static_cast<unsigned long>(length),
                             ec.value());
-                        fflush(stderr);
+                        fflush(PRINT_STREAM);
                     }
                     return;
                 }
                 stats_.add_bytes_read(length);
-#if 0
-          const char* src_end = data_ + length;
-          const char* p = data_;
-          fprintf(stderr, "R: ");
-          while (p < src_end) {
-            fprintf(stderr, "%02x ", (*p++) & 0xFF);
-          }
-          fprintf(stderr, "\n");
-          fflush(stderr);
+#if PRINT_NETDATA
+                print_netdata('R', data_, data_ + length);
 #endif
-
                 int rap_ec = rap_muxer_recv(muxer_, data_, static_cast<int>(length));
                 if (rap_ec < 0) {
-                    fprintf(stderr, "crapper::muxer::read_stream(): rap error %d\n",
+                    fprintf(PRINT_STREAM, "crapper::muxer::read_stream(): rap error %d\n",
                         rap_ec);
-                    fflush(stderr);
+                    fflush(PRINT_STREAM);
                 } else {
                     assert(rap_ec == static_cast<int>(length));
                 }
@@ -407,7 +426,7 @@ private:
                 socket_.get_option(no_delay_option);
                 socket_.get_option(receive_buffer_size_option);
                 socket_.get_option(send_buffer_size_option);
-                fprintf(stderr,
+                fprintf(PRINT_STREAM,
                     "connection established (no_delay %d, read_stream %d, send %d)\n",
                     no_delay_option.value(),
                     receive_buffer_size_option.value(),
@@ -456,7 +475,7 @@ private:
                 last_stat_mbps_out_ = stat_mbps_out_;
                 last_stat_rps_ = stat_rps_;
                 fprintf(
-                    stderr,
+                    PRINT_STREAM,
                     "%llu Rps - IN: %llu Mbps, %llu iops - OUT: %llu Mbps, %llu iops, %llu bpio\n",
                     stat_rps_, stat_mbps_in_, stat_iops_in_, stat_mbps_out_,
                     stat_iops_out_, stat_bytes_per_write_);
@@ -483,7 +502,7 @@ int main(int argc, char* argv[])
         server s(static_cast<unsigned short>(std::atoi(port)));
         s.run();
     } catch (std::exception& e) {
-        std::cerr << "Exception: " << e.what() << "\n";
+        fprintf(PRINT_STREAM, "Exception: %s\n", e.what());
     }
 
     return 0;
