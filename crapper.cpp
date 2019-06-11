@@ -107,12 +107,11 @@ public:
                 stats_->head_count++;
             process_head(r);
         }
-        if (hdr.has_body())
+        if (hdr.is_final() || (contentlength_ >= 0 && contentread_ >= contentlength_))
+            write_frame(finalframe_);
+        else if (hdr.has_body())
             process_body(r);
         pubsync();
-        if (contentread_ >= contentlength_) {
-            write_frame(finalframe_);
-        }
         return 0;
     }
 
@@ -143,6 +142,7 @@ public:
         return r.error();
     }
 
+    /*
     rap::error process_final(rap::reader& r)
     {
         assert(r.size() == 0);
@@ -150,6 +150,7 @@ public:
         pubsync();
         return r.error();
     }
+    */
 
 protected:
     conn::int_type overflow(int_type ch)

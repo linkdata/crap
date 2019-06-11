@@ -58,10 +58,10 @@ public:
         while (src_ptr < src_end) {
             // make sure we have header
             while (frame_ptr_ < frame_buf_ + rap_frame_header_size) {
+                if (src_ptr >= src_end)
+                    return static_cast<int>(src_ptr - src_buf);
                 assert(src_ptr < src_end);
                 *frame_ptr_++ = *src_ptr++;
-                if (src_ptr >= src_end)
-                    return (int)(src_ptr - src_buf);
             }
 
             // copy data until frame is complete
@@ -74,7 +74,7 @@ public:
             }
 
             if (frame_ptr_ < frame_end)
-                return (int)(src_ptr - src_buf);
+                return static_cast<int>(src_ptr - src_buf);
 
             // frame completed
             const rap_frame* f = reinterpret_cast<const rap_frame*>(frame_buf_);
@@ -88,7 +88,7 @@ public:
             frame_ptr_ = frame_buf_;
         }
         assert(src_ptr == src_end);
-        return (int)(src_ptr - src_buf);
+        return static_cast<int>(src_ptr - src_buf);
     }
 
 protected:

@@ -11,6 +11,7 @@ struct rap_header {
     static const unsigned char mask_head = 0x20;
     static const unsigned char mask_body = 0x40;
     static const unsigned char mask_flow = 0x80;
+    static const unsigned char mask_all = (mask_head | mask_body | mask_flow);
     static const unsigned char mask_id = (rap_muxer_conn_id >> 8);
 
     rap_header()
@@ -61,6 +62,8 @@ struct rap_header {
         buf_[3] = static_cast<unsigned char>(id);
     }
 
+    bool is_flow() const { return (buf_[2] & mask_flow) == mask_flow; }
+    bool is_ack() const { return (buf_[2] & mask_all) == mask_flow; }
     bool is_conn_control() const { return buf_[2] == mask_id && buf_[3] == 0xff; }
     bool is_final() const { return (buf_[2] & (mask_flow|mask_body)) == (mask_flow|mask_body); }
     void set_final() { buf_[2] |= (mask_flow|mask_body); }

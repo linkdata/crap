@@ -21,6 +21,8 @@ public:
         , queue_(nullptr)
         , id_(rap_muxer_conn_id)
         , send_window_(0)
+        , local_sent_final_(false)
+        , remote_sent_final_(false)
     {
     }
 
@@ -35,10 +37,12 @@ public:
         queue_ = nullptr;
         id_ = id;
         send_window_ = static_cast<int16_t>(send_window);
+        local_sent_final_ = false;
+        remote_sent_final_ = false;
 
         ack_[0] = '\0';
         ack_[1] = '\0';
-        ack_[2] = static_cast<char>(id_ >> 8);
+        ack_[2] = static_cast<char>(id_ >> 8) | 0x80;
         ack_[3] = static_cast<char>(id_);
 
         return 0;
@@ -73,6 +77,7 @@ public:
         if (send_window_ < 1) {
 #ifndef NDEBUG
             fprintf(stderr, "conn %04x waiting for ack\n", id_);
+            fflush(stderr);
 #endif
             framelink::enqueue(&queue_, f);
             return rap_err_ok;
@@ -82,20 +87,24 @@ public:
 
     bool process_frame(const rap_frame* f, int len, error& ec)
     {
-        if (!f->header().has_payload()) {
-            ++send_window_;
-            ec = write_queue();
-            return false;
+        if (f->header().is_flow())
+        {
+            if (f->header().is_ack()) {
+                ++send_window_;
+                ec = write_queue();
+                return true;
+            } else if (f->header().is_final()) {
+                assert(!remote_sent_final_);
+                remote_sent_final_ = true;
+            }
         }
-        if (!f->header().is_final()) {
-            if ((ec = send_ack()))
-                return false;
-        }
-
-        bool had_head = f->header().has_head();
         if (conn_cb_)
             conn_cb_(conn_cb_param_, this, f, len);
-        return had_head;
+        if ((ec = send_ack())) {
+            assert(!ec);
+            return false;
+        }
+        return true;
     }
 
     rap_conn_id id() const { return id_; }
@@ -110,12 +119,14 @@ private:
     rap_conn_id id_;
     int16_t send_window_;
     char ack_[4];
+    bool local_sent_final_;
+    bool remote_sent_final_;
 
     error write_queue()
     {
         while (queue_ != nullptr) {
             rap_frame* f = reinterpret_cast<rap_frame*>(queue_ + 1);
-            if (!f->header().is_final() && send_window_ < 1)
+            if (!f->header().is_flow() && send_window_ < 1)
                 return rap_err_ok;
             if (error e = send_frame(f))
                 return e;
@@ -130,8 +141,14 @@ private:
             assert("rap::conn::send_frame(): muxer_.write() failed" == nullptr);
             return rap_err_output_buffer_too_small;
         }
-        if (!f->header().is_final())
+        if (f->header().is_flow()) {
+            if (f->header().is_final()) {
+                assert(!local_sent_final_);
+                local_sent_final_ = true;
+            }
+        } else {
             --send_window_;
+        }
         return rap_err_ok;
     }
 
